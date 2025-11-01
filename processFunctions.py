@@ -101,7 +101,16 @@ def get_song_cover(song_id):
     else:
         print(f"Fuck spotify. No image found for: {song_id}")
         return None
-    
+
+# can only be used on bullshit that aren't arrays
+def sort_songs_by(parameter, unfucked_data, crescator):
+    data = {}
+
+    for song in unfucked_data:
+        data[song["song_id"]] = song[parameter]
+
+    print(sorted(data.items(), key=lambda x: x[1], reverse=crescator))
+    return sorted(data.items(), key=lambda x: x[1], reverse=crescator)
 
 def get_song_display_info(song_id, unfucked_data):
     image_url = get_song_cover(song_id)

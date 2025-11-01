@@ -232,8 +232,8 @@ settings_row += 1
 
 order_label = ctk.CTkLabel(settings_frame, text="Order of songs:")
 order_label.grid(row=settings_row, column=0, padx=(0, 10), pady=10, sticky="e")
-order_dropdown = ctk.CTkComboBox(settings_frame, values=["Chronologicaly", "Chronologicaly descending", "Your most streamed", "Your least streamed"],)
-order_dropdown.set("Chronologicaly")
+order_dropdown = ctk.CTkComboBox(settings_frame, values=["Chronologicaly", "Chronologicaly descending", "Your most streamed", "Your least streamed", "Average time listened (by %)", "Skips", "Times on shuffle"],)
+order_dropdown.set("Your most streamed")
 order_dropdown.grid(row=settings_row, column=1, padx=(0, 0), pady=0, sticky="w")
 settings_row += 1
 
@@ -307,15 +307,28 @@ def process_song(song_data, row, col):
 
 def initialize_song_page():
     songs_analized = []
+    songs_to_use = None
+    
     row = 0
     col = 0
 
-    if order_dropdown.get() == "Chronologicaly":
-        for i in range(len(unfucked_data)):
+    if order_dropdown.get() == "Your most streamed" or order_dropdown.get() == 'Your least streamed':
+        if thirty_sec_rule:
+            if order_dropdown.get() == 'Your most streamed':
+                songs_to_use = pf.sort_songs_by("registered_times_played", unfucked_data, True)
+            else:
+                songs_to_use = pf.sort_songs_by("registered_times_played", unfucked_data, False)
+        else:
+            if order_dropdown.get() == 'Your most streamed':
+                songs_to_use = pf.sort_songs_by("times_played", unfucked_data, True)
+            else:
+                songs_to_use = pf.sort_songs_by("times_played", unfucked_data, False)
+
+        for i in range(len(songs_to_use)):
             if len(songs_analized) >= limit:
                 break
 
-            song_id = unfucked_data[i]["song_id"]
+            song_id = songs_to_use[i][0]
 
             if song_id not in songs_analized:
                 song_data = pf.get_song_display_info(song_id, unfucked_data)
@@ -333,74 +346,5 @@ def initialize_song_page():
                     row += 1
 
                 main_frame.update()
-    elif order_dropdown.get() == "Chronologicaly descending":
-        for i in range(len(unfucked_data)-1, -1, -1):
-            if len(songs_analized) >= limit:
-                break
-
-            song_id = unfucked_data[i]["song_id"]
-
-            if song_id not in songs_analized:
-                song_data = pf.get_song_display_info(song_id, unfucked_data)
-                
-                if song_data["times_played"] is not 0:
-                    songs_analized.append(song_id)
-
-                    process_song(song_data, row, col)
-
-                    col += 1
-                    if col >= songs_per_row:
-                        col = 0
-                        row += 1
-
-                    main_frame.update()
-    elif order_dropdown.get() == "Your most streamed":
-        sorted_songs_crescator = sorted_songs(True)
-
-        for i in range(len(sorted_songs_crescator)-1):
-            if len(songs_analized) >= limit:
-                break
-
-            song_id = sorted_songs_crescator[i][0]
-
-            if song_id not in songs_analized:
-                song_data = pf.get_song_display_info(song_id, unfucked_data)
-                
-                if song_data["times_played"] != 0:
-                    songs_analized.append(song_id)
-
-                    process_song(song_data, row, col)
-
-                    col += 1
-                    if col >= songs_per_row:
-                        col = 0
-                        row += 1
-
-                    main_frame.update()
-    elif order_dropdown.get() == "Your least streamed":
-        sorted_songs_crescator = sorted_songs(True)
-
-        for i in range(len(sorted_songs_crescator)-1, -1, -1):
-            if len(songs_analized) >= limit:
-                break
-
-            song_id = sorted_songs_crescator[i][0]
-
-            if song_id not in songs_analized:
-                song_data = pf.get_song_display_info(song_id, unfucked_data)
-                
-                if song_data["times_played"] != 0:
-                    songs_analized.append(song_id)
-
-                    process_song(song_data, row, col)
-
-                    col += 1
-                    if col >= songs_per_row:
-                        col = 0
-                        row += 1
-
-                    main_frame.update()
-    else:
-        print("You fucking moron")
 
 app.mainloop()
