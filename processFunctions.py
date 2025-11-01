@@ -102,6 +102,16 @@ def get_song_cover(song_id):
         print(f"Fuck spotify. No image found for: {song_id}")
         return None
 
+def get_song_length(song_id):
+    url = f"https://api.spotify.com/v1/tracks/{song_id}"
+    headers = get_auth_header(token)
+    
+    result = requests.get(url, headers=headers)
+    json_result = json.loads(result.content)
+    
+    duration_ms = json_result["duration_ms"]
+    return duration_ms
+
 # can only be used on bullshit that aren't arrays
 def sort_songs_by(parameter, unfucked_data, crescator):
     data = {}
@@ -124,7 +134,6 @@ def get_song_display_info(song_id, unfucked_data):
                 "all_miliseconds": song["all_miliseconds"],
                 "average_time_listened": song["average_time_listened"],
                 "skips": song["skips"],
-                "times_on_shuffle": song["times_on_shuffle"],
                 "song_name": song["song_name"],
                 "song_id": song["song_id"],
                 "artist_name": song["artist_name"],

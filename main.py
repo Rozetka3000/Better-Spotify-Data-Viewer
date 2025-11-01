@@ -126,7 +126,6 @@ def unfuck_the_data():
 
         song_data = {}
         skips = 0
-        times_on_shuffle = 0
         timestamps = []
         all_miliseconds = []
         for this_song in unworked_data:
@@ -136,8 +135,6 @@ def unfuck_the_data():
 
                 if this_song["skipped"] == True:
                     skips += 1
-                if this_song["shuffle"] == True:
-                    times_on_shuffle += 1
         
         average_ms = sum(all_miliseconds) / len(all_miliseconds)
 
@@ -146,7 +143,6 @@ def unfuck_the_data():
         song_data["average_time_listened"] = average_ms
 
         song_data["skips"] = skips
-        song_data["times_on_shuffle"] = times_on_shuffle
 
         song_data["song_name"] = song_name
 
@@ -288,6 +284,7 @@ def sorted_songs(crescator):
 
     return sorted(songs.items(), key=lambda x: x[1], reverse=crescator)
 
+# TO DO: remake it so that it shows only bs i need
 def process_song(song_data, row, col):
     song_frame = ctk.CTkFrame(main_frame)
     song_frame.grid(row=row, column=col, padx=10, pady=10, sticky="nsew")
@@ -307,7 +304,7 @@ def process_song(song_data, row, col):
 
 def initialize_song_page():
     songs_analized = []
-    songs_to_use = None
+    songs_to_use = []
     
     row = 0
     col = 0
@@ -346,5 +343,43 @@ def initialize_song_page():
                     row += 1
 
                 main_frame.update()
+    elif order_dropdown.get() == "Average time listened (by %)":
+        _songs_to_use = pf.sort_songs_by("average_time_listened", unfucked_data, True)
 
+        # from ms to %
+        for i in range(len(_songs_to_use)):
+            if i == limit:
+                break
+
+            song = _songs_to_use[i]
+
+            song_length = pf.get_song_length(song[0])
+            avg_ms = song[1]
+            perc = int((avg_ms / song_length) * 100)
+            
+            songs_to_use.append([song[0], perc])
+
+        for i in range(len(songs_to_use)):
+            if len(songs_analized) >= limit:
+                break
+
+            song_id = songs_to_use[i][0]
+
+            if song_id not in songs_analized:
+                song_data = pf.get_song_display_info(song_id, unfucked_data)
+
+                if thirty_sec_rule and song_data["registered_times_played"] is 0:
+                    continue
+                    
+                songs_analized.append(song_id)
+
+                process_song(song_data, row, col)
+
+                col += 1
+                if col >= songs_per_row:
+                    col = 0
+                    row += 1
+
+                main_frame.update()
+        
 app.mainloop()
