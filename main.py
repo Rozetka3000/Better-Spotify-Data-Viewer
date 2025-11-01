@@ -6,6 +6,8 @@ import processFunctions as pf
 import base64
 from requests import post
 import os
+from datetime import datetime
+
 
 client_id = pf.client_id
 client_secret = pf.client_secret
@@ -50,9 +52,11 @@ app_name = "Spotifystatsforfree"
 app_folder = os.path.join(appdata_folder, app_name)
 os.makedirs(app_folder, exist_ok=True)
 stitched_data_path = os.path.join(app_folder, "user_listening_data.json")
+unfucked_data_path = os.path.join(app_folder, "unfucked_user_data.json")
 
 jsonData = None
 unworked_data = None
+unfucked_data = None
 
 if os.path.exists(stitched_data_path):
     jsonData = open(stitched_data_path, 'r', encoding="utf-8")
@@ -81,7 +85,6 @@ else:
                 file_content = file_content + ","
                 file_string = file_string + file_content
             elif i == (len(data_files)-1):
-                print("hui")
                 file_content = open(data_files[i], 'r', encoding="utf-8").read()
                 file_content = file_content[1:]
                 file_string = file_string + file_content
@@ -106,6 +109,77 @@ else:
 
         quit_btn = ctk.CTkButton(error_window, text="Quit", command=lambda: quit())
         quit_btn.pack()
+
+def unfuck_the_data():
+    global unworked_data
+    already_checked = []
+    good_data = []
+
+    i = 1
+    for song in unworked_data:
+        song_name = song['master_metadata_track_name']
+        
+        if song_name in already_checked:
+            continue
+
+        already_checked.append(song_name)
+
+        song_data = {}
+        skips = 0
+        times_on_shuffle = 0
+        timestamps = []
+        all_miliseconds = []
+        for this_song in unworked_data:
+            if this_song["master_metadata_track_name"] == song_name:
+                timestamps.append(pf.spotify_time_to_normal_time(this_song["ts"]))
+                all_miliseconds.append(this_song["ms_played"])
+
+                if this_song["skipped"] == True:
+                    skips += 1
+                if this_song["shuffle"] == True:
+                    times_on_shuffle += 1
+        
+        average_ms = sum(all_miliseconds) / len(all_miliseconds)
+
+        song_data["timestamps"] = timestamps
+        song_data["all_miliseconds"] = all_miliseconds
+        song_data["average_time_listened"] = average_ms
+
+        song_data["skips"] = skips
+        song_data["times_on_shuffle"] = times_on_shuffle
+
+        song_data["song_name"] = song_name
+
+        song_id = song['spotify_track_uri'].replace('spotify:track:', '')
+        song_data["song_id"] = song_id
+
+        artist = song['master_metadata_album_artist_name']
+        song_data["artist_name"] = artist
+        
+        unchecked_times_played = pf.count_plays(song["master_metadata_track_name"], unworked_data, False)
+        checked_times_played = pf.count_plays(song["master_metadata_track_name"], unworked_data, True)
+        song_data["times_played"] = unchecked_times_played
+        song_data["registered_times_played"] = checked_times_played
+
+        #song_cover = pf.get_song_cover(song_id)
+        #song_data["cover"] = song_cover
+        
+        good_data.append(song_data)
+        
+        i += 1
+        print(f"Unfucked the {i}th song")
+
+    json_unfucked_data = json.dumps(good_data)
+    with open(unfucked_data_path, 'w', encoding="utf-8") as f:
+        f.write(json_unfucked_data)
+
+    return good_data
+
+if os.path.exists(unfucked_data_path):
+    unfucked_json = open(unfucked_data_path, 'r', encoding="utf-8")
+    unfucked_data = json.load(unfucked_json)
+else:
+    unfucked_data = unfuck_the_data()
 
 
 # Scroll huita
@@ -218,7 +292,11 @@ def process_song(song_data, row, col):
     song_frame = ctk.CTkFrame(main_frame)
     song_frame.grid(row=row, column=col, padx=10, pady=10, sticky="nsew")
 
-    song_info = f"Song name: {song_data['name']}\nArtists: {song_data['artists']}\nTimes played: {song_data['times_played']}"
+    song_info = f"Song name: {song_data['song_name']}\nArtists: {song_data['artist_name']}\n"
+    if thirty_sec_rule:
+        song_info = song_info + f"Times played: {song_data["registered_times_played"]}"
+    else:
+        song_info = song_info + f"Times played: {song_data["times_played"]}"
     song_label = ctk.CTkLabel(song_frame, text=song_info, font=("Arial", 14))  # song_frame as parent!
 
     song_image = pf.image_from_url(song_data["cover_url"], ctk, size=(200, 200))
@@ -233,35 +311,37 @@ def initialize_song_page():
     col = 0
 
     if order_dropdown.get() == "Chronologicaly":
-        for i in range(len(unworked_data)):
+        for i in range(len(unfucked_data)):
             if len(songs_analized) >= limit:
                 break
 
-            song_id = unworked_data[i]["spotify_track_uri"]
+            song_id = unfucked_data[i]["song_id"]
 
             if song_id not in songs_analized:
-                song_data = pf.get_song_display_info(song_id, unworked_data, thirty_sec_rule)
+                song_data = pf.get_song_display_info(song_id, unfucked_data)
 
-                if song_data["times_played"] is not 0:
-                    songs_analized.append(song_id)
+                if thirty_sec_rule and song_data["registered_times_played"] is 0:
+                    continue
+                    
+                songs_analized.append(song_id)
 
-                    process_song(song_data, row, col)
+                process_song(song_data, row, col)
 
-                    col += 1
-                    if col >= songs_per_row:
-                        col = 0
-                        row += 1
+                col += 1
+                if col >= songs_per_row:
+                    col = 0
+                    row += 1
 
-                    main_frame.update()
+                main_frame.update()
     elif order_dropdown.get() == "Chronologicaly descending":
-        for i in range(len(unworked_data)-1, -1, -1):
+        for i in range(len(unfucked_data)-1, -1, -1):
             if len(songs_analized) >= limit:
                 break
 
-            song_id = unworked_data[i]["spotify_track_uri"]
+            song_id = unfucked_data[i]["song_id"]
 
             if song_id not in songs_analized:
-                song_data = pf.get_song_display_info(song_id, unworked_data, thirty_sec_rule)
+                song_data = pf.get_song_display_info(song_id, unfucked_data)
                 
                 if song_data["times_played"] is not 0:
                     songs_analized.append(song_id)
@@ -284,7 +364,7 @@ def initialize_song_page():
             song_id = sorted_songs_crescator[i][0]
 
             if song_id not in songs_analized:
-                song_data = pf.get_song_display_info(song_id, unworked_data, thirty_sec_rule)
+                song_data = pf.get_song_display_info(song_id, unfucked_data)
                 
                 if song_data["times_played"] != 0:
                     songs_analized.append(song_id)
@@ -299,6 +379,7 @@ def initialize_song_page():
                     main_frame.update()
     elif order_dropdown.get() == "Your least streamed":
         sorted_songs_crescator = sorted_songs(True)
+
         for i in range(len(sorted_songs_crescator)-1, -1, -1):
             if len(songs_analized) >= limit:
                 break
@@ -306,7 +387,7 @@ def initialize_song_page():
             song_id = sorted_songs_crescator[i][0]
 
             if song_id not in songs_analized:
-                song_data = pf.get_song_display_info(song_id, unworked_data, thirty_sec_rule)
+                song_data = pf.get_song_display_info(song_id, unfucked_data)
                 
                 if song_data["times_played"] != 0:
                     songs_analized.append(song_id)

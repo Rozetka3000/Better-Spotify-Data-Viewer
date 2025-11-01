@@ -1,9 +1,10 @@
 import requests
 import json
 import base64
-from PIL import Image, ImageTk
+from PIL import Image
 from io import BytesIO
 import apikeys
+from datetime import datetime
 
 
 client_id = apikeys.client_id
@@ -32,6 +33,11 @@ def get_auth_header(token):
 
 
 
+def spotify_time_to_normal_time(spotify_time):
+    time = datetime.fromisoformat(spotify_time.replace('Z', '+00:00'))
+    time = time.strftime("%Y-%m-%d %H:%M:%S")
+    return time
+
 def search_for_artist(token, artist_name):
     url = "https://api.spotify.com/v1/search?"
     headers = get_auth_header(token)
@@ -52,10 +58,7 @@ def get_artist(artist_id):
 
     return json_result
 
-def searchForTrack(url):
-    if url.startswith('spotify:track:'):
-        url = url.replace('spotify:track:', '')
-
+# only to be used before you unfuck the data
 def count_plays(song_name, unworked_data, thirty_sec_rule):
     count = 0
 
@@ -85,34 +88,40 @@ def image_from_url(url, ctk, size=(640, 640)):
     ctk_image = ctk.CTkImage(light_image=image, dark_image=image, size=size)
     return ctk_image
 
-def get_song_display_info(song_id, unworked_data, thirty_sec_rule):
-    if song_id.startswith('spotify:track:'):
-        song_id = song_id.replace('spotify:track:', '')
-
+def get_song_cover(song_id):
     url = "https://api.spotify.com/v1/tracks/"
     headers = get_auth_header(token)
     query_url = url + song_id
 
     result = requests.get(query_url, headers=headers)
     json_result = json.loads(result.content)
-    #print(json_result)
-
-    artists = []
-    artists_data = json_result["artists"]
     
-    for i in range(len(artists_data)):
-        artist_name = artists_data[i]["name"]
-        artists.append(artist_name)
+    if "album" in json_result and "images" in json_result["album"] and len(json_result["album"]["images"]) > 0:
+        return json_result["album"]["images"][0]["url"]
+    else:
+        print(f"Fuck spotify. No image found for: {song_id}")
+        return None
     
-    song_name = json_result["name"]
-    times_played = count_plays(song_name, unworked_data, thirty_sec_rule)
 
-    image_url = json_result["album"]["images"][0]["url"]
+def get_song_display_info(song_id, unfucked_data):
+    image_url = get_song_cover(song_id)
 
-    print(f"Finished {song_name}!!!!")
-    return { 
-        "name": song_name,
-        "artists": artists,
-        "times_played": times_played,
-        "cover_url": image_url
-    }
+    for song in unfucked_data:
+        if song["song_id"] == song_id:                
+            print(f"Finished {song["song_name"]}!!!!")
+
+            return { 
+                "timestamps": song["timestamps"],
+                "all_miliseconds": song["all_miliseconds"],
+                "average_time_listened": song["average_time_listened"],
+                "skips": song["skips"],
+                "times_on_shuffle": song["times_on_shuffle"],
+                "song_name": song["song_name"],
+                "song_id": song["song_id"],
+                "artist_name": song["artist_name"],
+                "times_played": song["times_played"],
+                "registered_times_played": song["registered_times_played"],
+                "cover_url": image_url
+            }
+
+    return "Kill yourself"
