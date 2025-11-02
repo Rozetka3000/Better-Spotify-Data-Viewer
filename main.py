@@ -228,7 +228,7 @@ settings_row += 1
 
 order_label = ctk.CTkLabel(settings_frame, text="Order of songs:")
 order_label.grid(row=settings_row, column=0, padx=(0, 10), pady=10, sticky="e")
-order_dropdown = ctk.CTkComboBox(settings_frame, values=["Chronologicaly", "Chronologicaly descending", "Your most streamed", "Your least streamed", "Average time listened (by %)", "Skips", "Times on shuffle"],)
+order_dropdown = ctk.CTkComboBox(settings_frame, values=["Chronologicaly", "Chronologicaly descending", "Your most streamed", "Your least streamed", "Average time listened (by %)", "Skips"])
 order_dropdown.set("Your most streamed")
 order_dropdown.grid(row=settings_row, column=1, padx=(0, 0), pady=0, sticky="w")
 settings_row += 1
@@ -284,24 +284,33 @@ def sorted_songs(crescator):
 
     return sorted(songs.items(), key=lambda x: x[1], reverse=crescator)
 
-# TO DO: remake it so that it shows only bs i need
-def process_song(song_data, row, col):
+def process_song(song_data, row, col, data_to_show):
     song_frame = ctk.CTkFrame(main_frame)
     song_frame.grid(row=row, column=col, padx=10, pady=10, sticky="nsew")
 
-    song_info = f"Song name: {song_data['song_name']}\nArtists: {song_data['artist_name']}\n"
-    if thirty_sec_rule:
-        song_info = song_info + f"Times played: {song_data["registered_times_played"]}"
-    else:
-        song_info = song_info + f"Times played: {song_data["times_played"]}"
-    song_label = ctk.CTkLabel(song_frame, text=song_info, font=("Arial", 14))  # song_frame as parent!
+    song_info = f"Song name: {song_data['song_name']}\nArtist: {song_data['artist_name']}\n"
 
+    if "times_played" in data_to_show:
+        if thirty_sec_rule:
+            song_info = song_info + f"Times played: {song_data["registered_times_played"]}"
+        else:
+            song_info = song_info + f"Times played: {song_data["times_played"]}"
+    
+    for i in range(len(data_to_show)):
+        field = data_to_show[i]
+        if field != "times_played" and field != "registered_times_played":
+            song_info = song_info + field + ": " + str(song_data[field]) + "\n"
+
+    song_info = song_info[:-1]
+    
+    song_label = ctk.CTkLabel(song_frame, text=song_info, font=("Arial", 14))
     song_image = pf.image_from_url(song_data["cover_url"], ctk, size=(200, 200))
-    song_image_label = ctk.CTkLabel(song_frame, image=song_image, text="")  # song_frame as parent!
+    song_image_label = ctk.CTkLabel(song_frame, image=song_image, text="")
 
     song_label.pack(pady=10)
     song_image_label.pack(pady=10)
 
+# TO DO: Optimize least streamed by makign images be processed later
 def initialize_song_page():
     songs_analized = []
     songs_to_use = []
@@ -335,7 +344,7 @@ def initialize_song_page():
                     
                 songs_analized.append(song_id)
 
-                process_song(song_data, row, col)
+                process_song(song_data, row, col, ["times_played"])
 
                 col += 1
                 if col >= songs_per_row:
@@ -373,7 +382,7 @@ def initialize_song_page():
                     
                 songs_analized.append(song_id)
 
-                process_song(song_data, row, col)
+                process_song(song_data, row, col, ["times_played"])
 
                 col += 1
                 if col >= songs_per_row:
@@ -381,5 +390,32 @@ def initialize_song_page():
                     row += 1
 
                 main_frame.update()
-        
+    elif order_dropdown.get() == "Skips":
+        songs_to_use = pf.sort_songs_by("skips", unfucked_data, True)
+
+        for i in range(len(songs_to_use)):
+            if len(songs_analized) >= limit:
+                break
+
+            song_id = songs_to_use[i][0]
+
+            if song_id not in songs_analized:
+                song_data = pf.get_song_display_info(song_id, unfucked_data)
+
+                if thirty_sec_rule and song_data["registered_times_played"] is 0:
+                    continue
+                    
+                songs_analized.append(song_id)
+
+                process_song(song_data, row, col, ["skips"])
+
+                col += 1
+                if col >= songs_per_row:
+                    col = 0
+                    row += 1
+
+                main_frame.update()
+
+
+
 app.mainloop()
