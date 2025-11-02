@@ -298,8 +298,15 @@ def process_song(song_data, row, col, data_to_show):
     
     for i in range(len(data_to_show)):
         field = data_to_show[i]
+        
         if field != "times_played" and field != "registered_times_played":
-            song_info = song_info + field + ": " + str(song_data[field]) + "\n"
+            if field == "first/last timestamp":
+                if order_dropdown.get() == "Chronologicaly":
+                    song_info = song_info + "Listened on" + ": " + str(pf.make_date_prettier(song_data["timestamps"][0])) + "\n"
+                else:
+                    song_info = song_info + "Listened on" + ": " + str(pf.make_date_prettier(song_data["timestamps"][-1])) + "\n"
+            else:
+                song_info = song_info + field + ": " + str(song_data[field]) + "\n"
 
     song_info = song_info[:-1]
     
@@ -310,7 +317,7 @@ def process_song(song_data, row, col, data_to_show):
     song_label.pack(pady=10)
     song_image_label.pack(pady=10)
 
-# TO DO: Optimize least streamed by makign images be processed later
+# TO DO: Optimize by makign images be processed later
 def initialize_song_page():
     songs_analized = []
     songs_to_use = []
@@ -415,7 +422,46 @@ def initialize_song_page():
                     row += 1
 
                 main_frame.update()
+    elif order_dropdown.get() == "Chronologicaly" or order_dropdown.get() == "Chronologicaly descending":
+        reverse = False
+        if order_dropdown.get() == "Chronologicaly descending":
+            reverse = True
+        
+        only_timestamps = []
 
+        # get all timestamps in a tuple
+        for song in unfucked_data:
+            song_id = song["song_id"]
+            timestamps = song["timestamps"]
+
+            for timestamp in timestamps:
+                only_timestamps.append((song_id, timestamp))
+
+        # organize the timestamps
+        songs_to_use = sorted(only_timestamps, key=lambda x: x[1], reverse=reverse)
+
+        for i in range(len(songs_to_use)):
+            if len(songs_analized) >= limit:
+                break
+
+            song_id = songs_to_use[i][0]
+
+            if song_id not in songs_analized:
+                song_data = pf.get_song_display_info(song_id, unfucked_data)
+
+                if thirty_sec_rule and song_data["registered_times_played"] is 0:
+                    continue
+                    
+                songs_analized.append(song_id)
+
+                process_song(song_data, row, col, ["first/last timestamp"])
+
+                col += 1
+                if col >= songs_per_row:
+                    col = 0
+                    row += 1
+
+                main_frame.update()
 
 
 app.mainloop()

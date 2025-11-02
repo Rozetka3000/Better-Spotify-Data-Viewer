@@ -122,6 +122,13 @@ def sort_songs_by(parameter, unfucked_data, crescator):
     print(sorted(data.items(), key=lambda x: x[1], reverse=crescator))
     return sorted(data.items(), key=lambda x: x[1], reverse=crescator)
 
+def make_date_prettier(date):
+    _date = datetime.strptime(date, "%Y-%m-%d %H:%M:%S")
+
+    format = "%B %d, %Y at %I:%M %p"
+
+    return _date.strftime(format)
+
 def get_song_display_info(song_id, unfucked_data):
     image_url = get_song_cover(song_id)
 
