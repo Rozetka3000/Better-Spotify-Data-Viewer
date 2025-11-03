@@ -280,6 +280,12 @@ def sorted_songs(crescator):
 
     return sorted(songs.items(), key=lambda x: x[1], reverse=crescator)
 
+def back_to_normal_page():
+    for widget in main_frame.winfo_children():
+        widget.destroy()
+
+    set_bs()
+
 def go_to_song_page(song_data):
     for widget in main_frame.winfo_children():
         widget.destroy()
@@ -308,23 +314,22 @@ def go_to_song_page(song_data):
     header_frame.pack(fill="x", padx=20, pady=20)
 
     song_title = song_data["song_name"]
-    title_label = ctk.CTkLabel(header_frame, text=song_title, font=("Arial", 30, "bold"), justify="left")
+    song_artist = song_data["artist_name"]
+    title_label = ctk.CTkLabel(header_frame, text=f'{song_title} by {song_artist}', font=("Arial", 40, "bold"), justify="left")
     title_label.pack(anchor="w")
     
-    song_artist = song_data["artist_name"]
     skips = song_data["skips"]
     times_played = song_data["times_played"]
     registered_times_played = song_data["registered_times_played"]
-    average_time_listened = song_data['average_time_listened'] / 1000
+    average_time_listened = round(song_data['average_time_listened'] / 1000)
 
-    song_info_text = f"Artist: {song_artist} \nTimes played (<30s): {times_played} \nTimes played (=>30s): {registered_times_played} \nTimes skiped: {skips} \nAverage time listened: {average_time_listened} \nFirst time listened: {pf.make_date_prettier(song_data["timestamps"][0])} \nLast time listened: {pf.make_date_prettier(song_data["timestamps"][-1])} \n"
-
-    
+    song_info_text = f"Times played (<30s): {times_played} \nTimes played (=>30s): {registered_times_played} \nTimes skiped: {skips} \nAverage time listened: {average_time_listened} seconds \nFirst time listened: {pf.make_date_prettier(song_data["timestamps"][0])} \nLast time listened: {pf.make_date_prettier(song_data["timestamps"][-1])} \n"
     song_info_text = song_info_text[:-1]
-    
-    song_info = ctk.CTkLabel(info_frame, text=song_info_text, font=("Arial", 30), justify="left")
+    song_info = ctk.CTkLabel(info_frame, text=song_info_text, font=("Arial", 25), justify="left")
+    song_info.pack(padx=23, pady=10, anchor="w")
 
-    song_info.pack()
+    back_btn = ctk.CTkButton(main_frame, text="Back", font=("Arial", 20), command=lambda: back_to_normal_page())
+    back_btn.pack(side="bottom", anchor="se", padx=20, pady=130)
     
 
 def process_song(song_data, row, col, data_to_show):
@@ -357,8 +362,8 @@ def process_song(song_data, row, col, data_to_show):
     song_image = pf.image_from_url(song_data["cover_url"], ctk, size=(200, 200))
     song_image_btn = ctk.CTkButton(song_frame, image=song_image, text="", command=lambda: go_to_song_page(song_data), fg_color="black", hover_color="white")
 
-    song_image_btn.pack(pady=10)
     song_label.pack(pady=10)
+    song_image_btn.pack(pady=10)
 
 # TO DO: Optimize by makign images be processed later
 def initialize_song_page():
