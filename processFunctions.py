@@ -5,10 +5,20 @@ from PIL import Image
 from io import BytesIO
 import apikeys
 from datetime import datetime
-
+import ast
+import os
 
 client_id = apikeys.client_id
 client_secret = apikeys.client_secret
+
+appdata_folder = os.environ.get("APPDATA")
+app_name = "Spotifystatsforfree"
+app_folder = os.path.join(appdata_folder, app_name)
+os.makedirs(app_folder, exist_ok=True)
+stitched_data_path = os.path.join(app_folder, "user_listening_data.json")
+unfucked_data_path = os.path.join(app_folder, "unfucked_user_data.json")
+cached_images_folder = os.path.join(app_folder, "Cached images")
+os.makedirs(cached_images_folder, exist_ok=True)
 
 def get_token():
     auth_string = client_id + ":" + client_secret
@@ -102,6 +112,26 @@ def get_song_cover(song_id):
         print(f"Fuck spotify. No image found for: {song_id}")
         return None
 
+def handle_cover_bullshit(song_id, ctk, size=(640, 640)):
+    cached_image_path = os.path.join(cached_images_folder, f"{song_id}.jpg")
+
+    if os.path.exists(cached_image_path):
+        #image_content = open(cached_image_path, 'rb').read()
+        image = Image.open(cached_image_path)
+        ctk_image = ctk.CTkImage(light_image=image, dark_image=image, size=size)
+        return ctk_image
+    else:
+        image_url = get_song_cover(song_id)
+        response = requests.get(image_url)
+        response.raise_for_status()
+        image = Image.open(BytesIO(response.content))
+        ctk_image = ctk.CTkImage(light_image=image, dark_image=image, size=size)
+
+        with open(cached_image_path, 'wb') as f:
+            image.save(f, "JPEG")
+            
+        return ctk_image
+
 def get_song_length(song_id):
     url = f"https://api.spotify.com/v1/tracks/{song_id}"
     headers = get_auth_header(token)
@@ -130,7 +160,7 @@ def make_date_prettier(date):
     return _date.strftime(format)
 
 def get_song_display_info(song_id, unfucked_data):
-    image_url = get_song_cover(song_id)
+    #image_url = get_song_cover(song_id)
 
     for song in unfucked_data:
         if song["song_id"] == song_id:                
@@ -146,7 +176,7 @@ def get_song_display_info(song_id, unfucked_data):
                 "artist_name": song["artist_name"],
                 "times_played": song["times_played"],
                 "registered_times_played": song["registered_times_played"],
-                "cover_url": image_url
+                #"cover_url": image_url
             }
 
     return "Kill yourself"

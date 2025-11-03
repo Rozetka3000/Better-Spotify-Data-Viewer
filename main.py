@@ -52,6 +52,8 @@ app_folder = os.path.join(appdata_folder, app_name)
 os.makedirs(app_folder, exist_ok=True)
 stitched_data_path = os.path.join(app_folder, "user_listening_data.json")
 unfucked_data_path = os.path.join(app_folder, "unfucked_user_data.json")
+cached_images_folder = os.path.join(app_folder, "Cached images")
+os.makedirs(cached_images_folder, exist_ok=True)
 
 jsonData = None
 unworked_data = None
@@ -301,7 +303,7 @@ def go_to_song_page(song_data):
     left_frame = ctk.CTkFrame(center_frame)
     left_frame.grid(row=0, column=0, sticky="nsew", padx=(0, 20))
 
-    song_image = pf.image_from_url(song_data["cover_url"], ctk, size=(400, 400))
+    song_image = pf.handle_cover_bullshit(song_data["song_id"], ctk, size=(400, 400))
     song_image_label = ctk.CTkLabel(left_frame, image=song_image, text="")
     song_image_label.pack(expand=True, padx=20, pady=20)
 
@@ -359,7 +361,7 @@ def process_song(song_data, row, col, data_to_show):
         song_info = song_info[:-1]
     
     song_label = ctk.CTkLabel(song_frame, text=song_info, font=("Arial", 14))
-    song_image = pf.image_from_url(song_data["cover_url"], ctk, size=(200, 200))
+    song_image = pf.handle_cover_bullshit(song_data["song_id"], ctk, size=(200, 200))
     song_image_btn = ctk.CTkButton(song_frame, image=song_image, text="", command=lambda: go_to_song_page(song_data), fg_color="black", hover_color="white")
 
     song_label.pack(pady=10)
