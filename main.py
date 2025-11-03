@@ -367,7 +367,6 @@ def process_song(song_data, row, col, data_to_show):
     song_label.pack(pady=10)
     song_image_btn.pack(pady=10)
 
-# TO DO: Optimize by makign images be processed later
 def initialize_song_page():
     songs_analized = []
     songs_to_use = []
