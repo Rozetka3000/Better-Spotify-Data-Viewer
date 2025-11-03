@@ -283,28 +283,48 @@ def sorted_songs(crescator):
 def go_to_song_page(song_data):
     for widget in main_frame.winfo_children():
         widget.destroy()
-    
+
+    center_frame = ctk.CTkFrame(main_frame, fg_color="transparent")
+    center_frame.pack(expand=True, fill="both", padx=50, pady=50)
+
+    center_frame.grid_columnconfigure(0, weight=1)
+    center_frame.grid_columnconfigure(1, weight=2)
+    center_frame.grid_rowconfigure(0, weight=1)
+
+    # Song cover
+    left_frame = ctk.CTkFrame(center_frame)
+    left_frame.grid(row=0, column=0, sticky="nsew", padx=(0, 20))
+
+    song_image = pf.image_from_url(song_data["cover_url"], ctk, size=(400, 400))
+    song_image_label = ctk.CTkLabel(left_frame, image=song_image, text="")
+    song_image_label.pack(expand=True, padx=20, pady=20)
+
+    # Info and bs
+    info_frame = ctk.CTkFrame(center_frame)
+    info_frame.grid(row=0, column=1, sticky="nsew")
+
+    # Header (idi nahui)
+    header_frame = ctk.CTkFrame(info_frame, fg_color="transparent")
+    header_frame.pack(fill="x", padx=20, pady=20)
+
     song_title = song_data["song_name"]
+    title_label = ctk.CTkLabel(header_frame, text=song_title, font=("Arial", 30, "bold"), justify="left")
+    title_label.pack(anchor="w")
+    
     song_artist = song_data["artist_name"]
     skips = song_data["skips"]
     times_played = song_data["times_played"]
     registered_times_played = song_data["registered_times_played"]
     average_time_listened = song_data['average_time_listened'] / 1000
 
-    song_info_text = f"Title: {song_title} \nArtist: {song_artist} \nTimes played (<30s): {times_played} \nTimes played (=>30s): {registered_times_played} \nTimes skiped: {skips} \nAverage time listened: {average_time_listened} \nFirst time listened: {pf.make_date_prettier(song_data["timestamps"][0])} \nLast time listened: {pf.make_date_prettier(song_data["timestamps"][-1])} \n"
+    song_info_text = f"Artist: {song_artist} \nTimes played (<30s): {times_played} \nTimes played (=>30s): {registered_times_played} \nTimes skiped: {skips} \nAverage time listened: {average_time_listened} \nFirst time listened: {pf.make_date_prettier(song_data["timestamps"][0])} \nLast time listened: {pf.make_date_prettier(song_data["timestamps"][-1])} \n"
 
-    #timestamps = song_data["timestamps"]
-    #for timestamp in timestamps:
-    #    song_info_text = song_info_text + pf.make_date_prettier(timestamp) + "\n"
     
     song_info_text = song_info_text[:-1]
-    song_image = pf.image_from_url(song_data["cover_url"], ctk, size=(400, 400))
     
-    song_info = ctk.CTkLabel(main_frame, text=song_info_text, font=("Arial", 30))
-    song_image_label = ctk.CTkLabel(main_frame, image=song_image, text="")
+    song_info = ctk.CTkLabel(info_frame, text=song_info_text, font=("Arial", 30), justify="left")
 
     song_info.pack()
-    song_image_label.pack()
     
 
 def process_song(song_data, row, col, data_to_show):
@@ -337,8 +357,8 @@ def process_song(song_data, row, col, data_to_show):
     song_image = pf.image_from_url(song_data["cover_url"], ctk, size=(200, 200))
     song_image_btn = ctk.CTkButton(song_frame, image=song_image, text="", command=lambda: go_to_song_page(song_data), fg_color="black", hover_color="white")
 
-    song_label.pack(pady=10)
     song_image_btn.pack(pady=10)
+    song_label.pack(pady=10)
 
 # TO DO: Optimize by makign images be processed later
 def initialize_song_page():
