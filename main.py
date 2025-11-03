@@ -291,17 +291,16 @@ def go_to_song_page(song_data):
     registered_times_played = song_data["registered_times_played"]
     average_time_listened = song_data['average_time_listened'] / 1000
 
-    song_info_text = f"Title: {song_title} \nArtist: {song_artist} \nTimes played (<30s): {times_played} \nTimes played (=>30s): {registered_times_played} \nTimes skiped: {skips} \nAverage time listened: {average_time_listened} \nListened on: \n"
+    song_info_text = f"Title: {song_title} \nArtist: {song_artist} \nTimes played (<30s): {times_played} \nTimes played (=>30s): {registered_times_played} \nTimes skiped: {skips} \nAverage time listened: {average_time_listened} \nFirst time listened: {pf.make_date_prettier(song_data["timestamps"][0])} \nLast time listened: {pf.make_date_prettier(song_data["timestamps"][-1])} \n"
 
     #timestamps = song_data["timestamps"]
     #for timestamp in timestamps:
     #    song_info_text = song_info_text + pf.make_date_prettier(timestamp) + "\n"
     
     song_info_text = song_info_text[:-1]
-
     song_image = pf.image_from_url(song_data["cover_url"], ctk, size=(400, 400))
     
-    song_info = ctk.CTkLabel(main_frame, text=song_info_text)
+    song_info = ctk.CTkLabel(main_frame, text=song_info_text, font=("Arial", 30))
     song_image_label = ctk.CTkLabel(main_frame, image=song_image, text="")
 
     song_info.pack()
@@ -317,7 +316,7 @@ def process_song(song_data, row, col, data_to_show):
     if thirty_sec_rule:
         times_played = song_data["registered_times_played"]
 
-    song_info = song_info + "Times played: " + str(times_played)
+    song_info = song_info + f"Times played: {times_played} \n"
     
     for i in range(len(data_to_show)):
         field = data_to_show[i]
