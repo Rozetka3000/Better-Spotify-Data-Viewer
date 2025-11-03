@@ -8,6 +8,7 @@ from requests import post
 import os
 from datetime import datetime
 
+
 client_id = pf.client_id
 client_secret = pf.client_secret
 
@@ -250,6 +251,9 @@ def set_bs():
     else:
         thirty_sec_rule = False
 
+    print(thirty_sec_rule)
+    print(order_dropdown.get())
+    print(len(unworked_data))
     initialize_song_page()
 
 config_btn = ctk.CTkButton(
@@ -280,44 +284,17 @@ def sorted_songs(crescator):
 
     return sorted(songs.items(), key=lambda x: x[1], reverse=crescator)
 
-def go_to_song_page(song_data):
-    for widget in main_frame.winfo_children():
-        widget.destroy()
-    
-    song_title = song_data["song_name"]
-    song_artist = song_data["artist_name"]
-    skips = song_data["skips"]
-    times_played = song_data["times_played"]
-    registered_times_played = song_data["registered_times_played"]
-    average_time_listened = song_data['average_time_listened'] / 1000
-
-    song_info_text = f"Title: {song_title} \nArtist: {song_artist} \nTimes played (<30s): {times_played} \nTimes played (=>30s): {registered_times_played} \nTimes skiped: {skips} \nAverage time listened: {average_time_listened} \nListened on: \n"
-
-    timestamps = song_data["timestamps"]
-    for timestamp in timestamps:
-        song_info_text = song_info_text + pf.make_date_prettier(timestamp) + "\n"
-    
-    song_info_text = song_info_text[:-1]
-
-    song_image = pf.image_from_url(song_data["cover_url"], ctk, size=(400, 400))
-    
-    song_info = ctk.CTkLabel(main_frame, text=song_info_text)
-    song_image_label = ctk.CTkLabel(main_frame, image=song_image, text="")
-
-    song_info.pack()
-    song_image_label.pack()
-    
-
 def process_song(song_data, row, col, data_to_show):
     song_frame = ctk.CTkFrame(main_frame)
     song_frame.grid(row=row, column=col, padx=10, pady=10, sticky="nsew")
+
     song_info = f"Song name: {song_data['song_name']}\nArtist: {song_data['artist_name']}\n"
 
-    times_played = song_data["times_played"]
-    if thirty_sec_rule:
-        times_played = song_data["registered_times_played"]
-
-    song_info = song_info + "Times played: " + str(times_played)
+    if "times_played" in data_to_show:
+        if thirty_sec_rule:
+            song_info = song_info + f"Times played: {song_data["registered_times_played"]}"
+        else:
+            song_info = song_info + f"Times played: {song_data["times_played"]}"
     
     for i in range(len(data_to_show)):
         field = data_to_show[i]
@@ -331,15 +308,14 @@ def process_song(song_data, row, col, data_to_show):
             else:
                 song_info = song_info + field + ": " + str(song_data[field]) + "\n"
 
-    if song_info[-1] == "\n":
-        song_info = song_info[:-1]
+    song_info = song_info[:-1]
     
     song_label = ctk.CTkLabel(song_frame, text=song_info, font=("Arial", 14))
     song_image = pf.image_from_url(song_data["cover_url"], ctk, size=(200, 200))
-    song_image_btn = ctk.CTkButton(song_frame, image=song_image, text="", command=lambda: go_to_song_page(song_data), fg_color="black", hover_color="white")
+    song_image_label = ctk.CTkLabel(song_frame, image=song_image, text="")
 
     song_label.pack(pady=10)
-    song_image_btn.pack(pady=10)
+    song_image_label.pack(pady=10)
 
 # TO DO: Optimize by makign images be processed later
 def initialize_song_page():
