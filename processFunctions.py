@@ -85,6 +85,20 @@ def count_plays(song_name, unworked_data, thirty_sec_rule):
 
     return count
 
+def sort_by_date(unfucked_data, reverse):
+    only_timestamps = []
+
+    for song in unfucked_data:
+        song_id = song["song_id"]
+        timestamps = song["timestamps"]
+
+        for timestamp in timestamps:
+            only_timestamps.append((song_id, timestamp))
+            
+    songs_to_use = sorted(only_timestamps, key=lambda x: x[1], reverse=reverse)
+    return songs_to_use
+
+
 def image_from_url(url, ctk, size=(640, 640)):
     response = requests.get(url)
     response.raise_for_status()

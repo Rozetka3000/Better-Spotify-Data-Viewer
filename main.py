@@ -231,18 +231,8 @@ settings_row += 1
 # calendar bullshit
 def get_earliest_and_last_timestamps(i, t):
     global unfucked_data
-    only_timestamps = []
-
-    # get all timestamps in a tuple
-    for song in unfucked_data:
-        song_id = song["song_id"]
-        timestamps = song["timestamps"]
-
-        for timestamp in timestamps:
-            only_timestamps.append((song_id, timestamp))
-
-    # organize the timestamps
-    songs_to_use = sorted(only_timestamps, key=lambda x: x[1], reverse=False)
+    
+    songs_to_use = pf.sort_by_date(unfucked_data, False)
 
     first_and_last = [songs_to_use[0], songs_to_use[-1]]
     timestamp = first_and_last[i][-1]
@@ -316,10 +306,8 @@ def set_bs():
     end_month_val = end_month.get()
     end_year_val = end_year.get()
 
-    start_date = date(year=int(start_year_val), month=int(start_month_val), day=int(start_day_val))
-    end_date = date(year=int(end_year_val), month=int(end_month_val), day=int(end_day_val))
-
-    #print(start_date, end_date)
+    start_date = datetime(year=int(start_year_val), month=int(start_month_val), day=int(start_day_val))
+    end_date = datetime(year=int(end_year_val), month=int(end_month_val), day=int(end_day_val))
     
     for widget in main_frame.winfo_children():
         widget.destroy()
@@ -449,25 +437,69 @@ def process_song(song_data, row, col, data_to_show):
     song_label.pack(pady=10)
     song_image_btn.pack(pady=10)
 
+# have skips be updated too when according for time
 def initialize_song_page():
     songs_analized = []
     songs_to_use = []
+
+    # recalc unfucked_data using timestamps
+    _unfucked_data = unfucked_data
+    for_removing = []
+    for song in _unfucked_data:
+        timestamps = song["timestamps"]
+        all_miliseconds = song["all_miliseconds"]
+
+        filtered_timestamps = []
+        filtered_ms = []
+
+        for i, timestamp in enumerate(timestamps):
+            _timestamp = datetime.strptime(timestamp, "%Y-%m-%d %H:%M:%S")
+
+            if start_date <= _timestamp <= end_date:
+                filtered_timestamps.append(timestamp)
+                filtered_ms.append(all_miliseconds[i])
+
+        if len(timestamps) == 0:
+            for_removing.append(song)
+            continue
+
+        song["timestamps"] = filtered_timestamps
+        song["all_miliseconds"] = filtered_ms
+
+        # recalc all_milisecond, avg time listened, number of plays...
+        average_time_listened = 0
+        if len(filtered_ms) != 0:
+            average_time_listened = sum(filtered_ms) / len(filtered_ms)
+        
+        times_played = 0
+        registered_times_played = len(filtered_timestamps)
+        
+        for ms in filtered_ms:
+            if ms > 30000:
+                times_played += 1
+
+        song["average_time_listened"] = average_time_listened
+        song["times_played"] = times_played
+        song["registered_times_played"] = registered_times_played
+
+    for song in for_removing:
+        _unfucked_data.remove(song)
     
-    
+   
     row = 0
     col = 0
 
     if order_dropdown.get() == "Your most streamed" or order_dropdown.get() == 'Your least streamed':
         if thirty_sec_rule:
             if order_dropdown.get() == 'Your most streamed':
-                songs_to_use = pf.sort_songs_by("registered_times_played", unfucked_data, True)
+                songs_to_use = pf.sort_songs_by("registered_times_played", _unfucked_data, True)
             else:
-                songs_to_use = pf.sort_songs_by("registered_times_played", unfucked_data, False)
+                songs_to_use = pf.sort_songs_by("registered_times_played", _unfucked_data, False)
         else:
             if order_dropdown.get() == 'Your most streamed':
-                songs_to_use = pf.sort_songs_by("times_played", unfucked_data, True)
+                songs_to_use = pf.sort_songs_by("times_played", _unfucked_data, True)
             else:
-                songs_to_use = pf.sort_songs_by("times_played", unfucked_data, False)
+                songs_to_use = pf.sort_songs_by("times_played", _unfucked_data, False)
 
         for i in range(len(songs_to_use)):
             if len(songs_analized) >= limit:
@@ -476,7 +508,7 @@ def initialize_song_page():
             song_id = songs_to_use[i][0]
 
             if song_id not in songs_analized:
-                song_data = pf.get_song_display_info(song_id, unfucked_data)
+                song_data = pf.get_song_display_info(song_id, _unfucked_data)
 
                 if thirty_sec_rule and song_data["registered_times_played"] is 0:
                     continue
@@ -492,7 +524,7 @@ def initialize_song_page():
 
                 main_frame.update()
     elif order_dropdown.get() == "Average time listened (by %)":
-        _songs_to_use = pf.sort_songs_by("average_time_listened", unfucked_data, True)
+        _songs_to_use = pf.sort_songs_by("average_time_listened", _unfucked_data, True)
 
         # from ms to %
         for i in range(len(_songs_to_use)):
@@ -514,7 +546,7 @@ def initialize_song_page():
             song_id = songs_to_use[i][0]
 
             if song_id not in songs_analized:
-                song_data = pf.get_song_display_info(song_id, unfucked_data)
+                song_data = pf.get_song_display_info(song_id, _unfucked_data)
 
                 if thirty_sec_rule and song_data["registered_times_played"] is 0:
                     continue
@@ -530,7 +562,7 @@ def initialize_song_page():
 
                 main_frame.update()
     elif order_dropdown.get() == "Skips":
-        songs_to_use = pf.sort_songs_by("skips", unfucked_data, True)
+        songs_to_use = pf.sort_songs_by("skips", _unfucked_data, True)
 
         for i in range(len(songs_to_use)):
             if len(songs_analized) >= limit:
@@ -539,7 +571,7 @@ def initialize_song_page():
             song_id = songs_to_use[i][0]
 
             if song_id not in songs_analized:
-                song_data = pf.get_song_display_info(song_id, unfucked_data)
+                song_data = pf.get_song_display_info(song_id, _unfucked_data)
 
                 if thirty_sec_rule and song_data["registered_times_played"] is 0:
                     continue
@@ -559,18 +591,7 @@ def initialize_song_page():
         if order_dropdown.get() == "Chronologicaly descending":
             reverse = True
         
-        only_timestamps = []
-
-        # get all timestamps in a tuple
-        for song in unfucked_data:
-            song_id = song["song_id"]
-            timestamps = song["timestamps"]
-
-            for timestamp in timestamps:
-                only_timestamps.append((song_id, timestamp))
-
-        # organize the timestamps
-        songs_to_use = sorted(only_timestamps, key=lambda x: x[1], reverse=reverse)
+        songs_to_use = pf.sort_by_date(_unfucked_data, reverse)
 
         for i in range(len(songs_to_use)):
             if len(songs_analized) >= limit:
@@ -579,7 +600,7 @@ def initialize_song_page():
             song_id = songs_to_use[i][0]
 
             if song_id not in songs_analized:
-                song_data = pf.get_song_display_info(song_id, unfucked_data)
+                song_data = pf.get_song_display_info(song_id, _unfucked_data)
 
                 if thirty_sec_rule and song_data["registered_times_played"] is 0:
                     continue
