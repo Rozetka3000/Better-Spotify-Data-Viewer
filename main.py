@@ -616,6 +616,20 @@ def initialize_song_page():
                     row += 1
 
                 main_frame.update()
+    elif order_dropdown.get() == "Minutes listened since X":
+        songs_to_use = _unfucked_data
+        total_ms = 0
+
+        for song in _unfucked_data:
+            total_ms += sum(song["all_miliseconds"])
+
+        total_mins = total_ms / 1000 / 60
+        total_hours = total_mins / 60
+
+        song_label = ctk.CTkLabel(main_frame, text=f"From {start_date} until {end_date}, you've listened to:\n {int(total_mins)} minutes, aka {int(total_hours)} hours", font=("Arial", 30))
+        song_label.pack(pady=10)
+
+
 
 
 app.mainloop()
