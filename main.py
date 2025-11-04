@@ -409,23 +409,17 @@ def process_song(song_data, row, col, data_to_show):
     song_frame.grid(row=row, column=col, padx=10, pady=10, sticky="nsew")
     song_info = f"Song name: {song_data['song_name']}\nArtist: {song_data['artist_name']}\n"
 
-    times_played = song_data["times_played"]
-    if thirty_sec_rule:
-        times_played = song_data["registered_times_played"]
-
-    song_info = song_info + f"Times played: {times_played} \n"
     
-    for i in range(len(data_to_show)):
-        field = data_to_show[i]
-        
-        if field != "times_played" and field != "registered_times_played":
-            if field == "first/last timestamp":
+    for field in data_to_show:
+        text, val = field
+
+        if field == "first/last timestamp":
                 if order_dropdown.get() == "Chronologicaly":
                     song_info = song_info + "Listened on" + ": " + str(pf.make_date_prettier(song_data["timestamps"][0])) + "\n"
                 else:
                     song_info = song_info + "Listened on" + ": " + str(pf.make_date_prettier(song_data["timestamps"][-1])) + "\n"
-            else:
-                song_info = song_info + field + ": " + str(song_data[field]) + "\n"
+        else:
+            song_info = song_info + text + str(val) + "\n"
 
     if song_info[-1] == "\n":
         song_info = song_info[:-1]
@@ -515,7 +509,11 @@ def initialize_song_page():
                     
                 songs_analized.append(song_id)
 
-                process_song(song_data, row, col, ["times_played"])
+                if thirty_sec_rule:
+                    process_song(song_data, row, col, [("Times played: ", song_data["registered_times_played"]), ("Total hours: ", int(sum(song_data["all_miliseconds"])/1000/60/60))])
+                    print(sum(song_data["all_miliseconds"]))
+                else:
+                    process_song(song_data, row, col, [("Times played: ", song_data["times_played"]), ("Total hours: ", int(sum(song_data["all_miliseconds"])/1000/60/60))])
 
                 col += 1
                 if col >= songs_per_row:
@@ -553,7 +551,10 @@ def initialize_song_page():
                     
                 songs_analized.append(song_id)
 
-                process_song(song_data, row, col, ["times_played"])
+                if thirty_sec_rule:
+                    process_song(song_data, row, col, [("Times played: ", song_data["registered_times_played"])])
+                else:
+                    process_song(song_data, row, col, [("Times played: ", song_data["times_played"])])
 
                 col += 1
                 if col >= songs_per_row:
@@ -578,7 +579,7 @@ def initialize_song_page():
                     
                 songs_analized.append(song_id)
 
-                process_song(song_data, row, col, ["skips"])
+                process_song(song_data, row, col, [("Skips: ", song_data["skips"])])
 
                 col += 1
                 if col >= songs_per_row:
@@ -607,7 +608,7 @@ def initialize_song_page():
                     
                 songs_analized.append(song_id)
 
-                process_song(song_data, row, col, ["first/last timestamp"])
+                process_song(song_data, row, col, [("first/last timestamp", 0)])
 
                 col += 1
                 if col >= songs_per_row:
