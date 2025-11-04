@@ -192,7 +192,7 @@ current_page = 0
 
 settings_toplevel = ctk.CTkToplevel(app)
 settings_toplevel.resizable(False, False)
-settings_toplevel.geometry("500x300")
+settings_toplevel.geometry("500x400")
 settings_toplevel.title("Configuration")
 
 settings_row = 0
@@ -227,12 +227,76 @@ tsr_checkbox = ctk.CTkCheckBox(settings_frame, text="", variable=shitty_thirty_s
 tsr_checkbox.grid(row=settings_row, column=1, padx=(0, 0), pady=0, sticky="w")
 settings_row += 1
 
+# calendar bullshit
+def get_earliest_and_last_timestamps(i, t):
+    global unfucked_data
+    only_timestamps = []
+
+    # get all timestamps in a tuple
+    for song in unfucked_data:
+        song_id = song["song_id"]
+        timestamps = song["timestamps"]
+
+        for timestamp in timestamps:
+            only_timestamps.append((song_id, timestamp))
+
+    # organize the timestamps
+    songs_to_use = sorted(only_timestamps, key=lambda x: x[1], reverse=False)
+
+    first_and_last = [songs_to_use[0], songs_to_use[-1]]
+    timestamp = first_and_last[i][-1]
+
+    date = datetime.strptime(timestamp, "%Y-%m-%d %H:%M:%S")
+
+    if t == "DD":
+        return date.day
+    elif t == "MM":
+        return date.month
+    elif t == "YY":
+        return date.year
+    else:
+        print("You fucking stupid")
+
+    return timestamp
+
+# start date
+start_frame = ctk.CTkFrame(settings_frame, fg_color="transparent")
+start_frame.grid(row=settings_row, column=0, columnspan=4, pady=5)
+ctk.CTkLabel(start_frame, text="Start date: ").grid(row=settings_row, column=0, padx=(0, 10), pady=10, sticky="e")
+start_day = ctk.CTkEntry(start_frame, width=40, placeholder_text=get_earliest_and_last_timestamps(0, "DD"))
+start_day.grid(row=settings_row, column=1, padx=(0, 5))
+start_month = ctk.CTkEntry(start_frame, width=40, placeholder_text=get_earliest_and_last_timestamps(0, "MM"))
+start_month.grid(row=settings_row, column=2, padx=(0, 5))
+start_year = ctk.CTkEntry(start_frame, width=60, placeholder_text=get_earliest_and_last_timestamps(0, "YY"))
+start_year.grid(row=settings_row, column=3, padx=(0, 5))
+settings_row += 1
+
+# end date
+end_frame = ctk.CTkFrame(settings_frame, fg_color="transparent")
+end_frame.grid(row=settings_row, column=0, columnspan=4, pady=5)
+ctk.CTkLabel(end_frame, text="End Date:").grid(row=settings_row, column=0, padx=(0, 10), pady=10, sticky="e")
+end_day = ctk.CTkEntry(end_frame, width=40, placeholder_text=get_earliest_and_last_timestamps(1, "DD"))
+end_day.grid(row=settings_row, column=1, padx=(0, 5))
+end_month = ctk.CTkEntry(end_frame, width=40, placeholder_text=get_earliest_and_last_timestamps(1, "MM"))
+end_month.grid(row=settings_row, column=2, padx=(0, 5))
+end_year = ctk.CTkEntry(end_frame, width=60, placeholder_text=get_earliest_and_last_timestamps(1, "YY"))
+end_year.grid(row=settings_row, column=3, padx=(0, 5))
+settings_row += 1
+
+def on_option_selected(dropdown_huita):
+    to_not_show_calendar = ["Average time listened (by %)", "Skips"]
+
+    if dropdown_huita.get() not in to_not_show_calendar:
+        pass
+
 order_label = ctk.CTkLabel(settings_frame, text="Order of songs:")
 order_label.grid(row=settings_row, column=0, padx=(0, 10), pady=10, sticky="e")
-order_dropdown = ctk.CTkComboBox(settings_frame, values=["Chronologicaly", "Chronologicaly descending", "Your most streamed", "Your least streamed", "Average time listened (by %)", "Skips"])
+order_dropdown = ctk.CTkComboBox(settings_frame, 
+                                 values=["Chronologicaly", "Chronologicaly descending", "Your most streamed", "Your least streamed", "Average time listened (by %)", "Skips", "Minutes listened since X"])
 order_dropdown.set("Your most streamed")
 order_dropdown.grid(row=settings_row, column=1, padx=(0, 0), pady=0, sticky="w")
 settings_row += 1
+
 
 def set_bs():
     global limit, songs_per_row, thirty_sec_rule

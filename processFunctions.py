@@ -20,6 +20,7 @@ unfucked_data_path = os.path.join(app_folder, "unfucked_user_data.json")
 cached_images_folder = os.path.join(app_folder, "Cached images")
 os.makedirs(cached_images_folder, exist_ok=True)
 
+
 def get_token():
     auth_string = client_id + ":" + client_secret
     auth_bytes = auth_string.encode("utf-8")
