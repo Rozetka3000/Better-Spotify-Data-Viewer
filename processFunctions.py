@@ -150,7 +150,7 @@ def sort_songs_by(parameter, unfucked_data, crescator):
     for song in unfucked_data:
         data[song["song_id"]] = song[parameter]
 
-    print(sorted(data.items(), key=lambda x: x[1], reverse=crescator))
+    #print(sorted(data.items(), key=lambda x: x[1], reverse=crescator))
     return sorted(data.items(), key=lambda x: x[1], reverse=crescator)
 
 def make_date_prettier(date):

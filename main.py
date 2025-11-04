@@ -6,6 +6,7 @@ import processFunctions as pf
 import base64
 from requests import post
 import os
+from datetime import date
 from datetime import datetime
 
 client_id = pf.client_id
@@ -254,40 +255,44 @@ def get_earliest_and_last_timestamps(i, t):
         return date.month
     elif t == "YY":
         return date.year
+    elif t == "date":
+        return date
     else:
         print("You fucking stupid")
 
     return timestamp
 
 # start date
+start_date = None
 start_frame = ctk.CTkFrame(settings_frame, fg_color="transparent")
 start_frame.grid(row=settings_row, column=0, columnspan=4, pady=5)
 ctk.CTkLabel(start_frame, text="Start date: ").grid(row=settings_row, column=0, padx=(0, 10), pady=10, sticky="e")
-start_day = ctk.CTkEntry(start_frame, width=40, placeholder_text=get_earliest_and_last_timestamps(0, "DD"))
+start_day = ctk.CTkEntry(start_frame, width=40, placeholder_text="")
+start_day.insert(0, get_earliest_and_last_timestamps(0, "DD"))
 start_day.grid(row=settings_row, column=1, padx=(0, 5))
 start_month = ctk.CTkEntry(start_frame, width=40, placeholder_text=get_earliest_and_last_timestamps(0, "MM"))
+start_month.insert(0, get_earliest_and_last_timestamps(0, "MM"))
 start_month.grid(row=settings_row, column=2, padx=(0, 5))
 start_year = ctk.CTkEntry(start_frame, width=60, placeholder_text=get_earliest_and_last_timestamps(0, "YY"))
 start_year.grid(row=settings_row, column=3, padx=(0, 5))
+start_year.insert(0, get_earliest_and_last_timestamps(0, "YY"))
 settings_row += 1
 
 # end date
+end_date = None
 end_frame = ctk.CTkFrame(settings_frame, fg_color="transparent")
 end_frame.grid(row=settings_row, column=0, columnspan=4, pady=5)
 ctk.CTkLabel(end_frame, text="End Date:").grid(row=settings_row, column=0, padx=(0, 10), pady=10, sticky="e")
 end_day = ctk.CTkEntry(end_frame, width=40, placeholder_text=get_earliest_and_last_timestamps(1, "DD"))
 end_day.grid(row=settings_row, column=1, padx=(0, 5))
+end_day.insert(0, get_earliest_and_last_timestamps(1, "DD"))
 end_month = ctk.CTkEntry(end_frame, width=40, placeholder_text=get_earliest_and_last_timestamps(1, "MM"))
 end_month.grid(row=settings_row, column=2, padx=(0, 5))
+end_month.insert(0, get_earliest_and_last_timestamps(1, "MM"))
 end_year = ctk.CTkEntry(end_frame, width=60, placeholder_text=get_earliest_and_last_timestamps(1, "YY"))
 end_year.grid(row=settings_row, column=3, padx=(0, 5))
+end_year.insert(0, get_earliest_and_last_timestamps(1, "YY"))
 settings_row += 1
-
-def on_option_selected(dropdown_huita):
-    to_not_show_calendar = ["Average time listened (by %)", "Skips"]
-
-    if dropdown_huita.get() not in to_not_show_calendar:
-        pass
 
 order_label = ctk.CTkLabel(settings_frame, text="Order of songs:")
 order_label.grid(row=settings_row, column=0, padx=(0, 10), pady=10, sticky="e")
@@ -299,9 +304,22 @@ settings_row += 1
 
 
 def set_bs():
-    global limit, songs_per_row, thirty_sec_rule
+    global limit, songs_per_row, thirty_sec_rule, start_date, end_date
     limit = int(limit_field.get())
     songs_per_row = int(spr_field.get())
+    
+    start_day_val = start_day.get()
+    start_month_val = start_month.get()
+    start_year_val = start_year.get()
+
+    end_day_val = end_day.get()
+    end_month_val = end_month.get()
+    end_year_val = end_year.get()
+
+    start_date = date(year=int(start_year_val), month=int(start_month_val), day=int(start_day_val))
+    end_date = date(year=int(end_year_val), month=int(end_month_val), day=int(end_day_val))
+
+    #print(start_date, end_date)
     
     for widget in main_frame.winfo_children():
         widget.destroy()
@@ -342,7 +360,7 @@ def sorted_songs(crescator):
         songs[song_id] = plays
         
         index += 1
-        print(index)
+        #print(index)
 
     return sorted(songs.items(), key=lambda x: x[1], reverse=crescator)
 
@@ -434,6 +452,7 @@ def process_song(song_data, row, col, data_to_show):
 def initialize_song_page():
     songs_analized = []
     songs_to_use = []
+    
     
     row = 0
     col = 0
