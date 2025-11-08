@@ -9,6 +9,7 @@ import os
 from datetime import datetime
 import time
 from collections import defaultdict
+import gc
 
 client_id = pf.client_id
 client_secret = pf.client_secret
@@ -62,8 +63,8 @@ unworked_data = None
 unfucked_data = None
 
 if os.path.exists(stitched_data_path):
-    jsonData = open(stitched_data_path, 'r', encoding="utf-8")
-    unworked_data = json.load(jsonData)
+    with open(stitched_data_path, 'r', encoding="utf-8") as jsonData:
+        unworked_data = json.load(jsonData)
 else:
     data_files = ctk.filedialog.askopenfilenames(title="Choose your JSON files that contain your listening data!", filetypes=[("JSON files", "*.json")])
 
@@ -184,8 +185,8 @@ def unfuck_the_data():
     return good_data
 
 if os.path.exists(unfucked_data_path):
-    unfucked_json = open(unfucked_data_path, 'r', encoding="utf-8")
-    unfucked_data = json.load(unfucked_json)
+    with open(unfucked_data_path, 'r', encoding="utf-8") as unfucked_json:
+        unfucked_data = json.load(unfucked_json)
 else:
     start_time = time.perf_counter()
     unfucked_data = unfuck_the_data()
@@ -204,7 +205,29 @@ def on_mouse_wheel(event):
     # Multiply the scroll amount for faster scrolling
     main_frame._parent_canvas.yview_scroll(int(-1 * (event.delta / 120) * 6), "units")
 
-current_page = 0
+data_management_toplevel = ctk.CTkToplevel(app)
+data_management_toplevel.resizable(False, False)
+data_management_toplevel.title("Data management")
+
+data_deleting_warning_label = ctk.CTkLabel(data_management_toplevel, text="WARNING: This will also close the program!", text_color="red")
+data_deleting_warning_label.grid(row=0, column=0, pady=10, padx=10)
+
+def delete_data(option):
+    if option == 0:
+        os.remove(unfucked_data_path)
+    elif option == 1:
+        if os.path.exists(unfucked_data_path):
+            os.remove(unfucked_data_path)
+
+        os.remove(stitched_data_path)
+
+delete_unfucked_data_btn = ctk.CTkButton(data_management_toplevel, text="Delete your processed data", command=lambda: delete_data(0))
+delete_unfucked_data_btn.grid(row=1, column=0, pady=10, padx=20)
+
+delete_all_data_btn = ctk.CTkButton(data_management_toplevel, text="Delete ALL your data", command=lambda: delete_data(1))
+delete_all_data_btn.grid(row=2, column=0, pady=10, padx=20)
+
+
 
 settings_toplevel = ctk.CTkToplevel(app)
 settings_toplevel.resizable(False, False)
@@ -224,7 +247,7 @@ limit_label = ctk.CTkLabel(settings_frame, text="Limit:")
 limit_label.grid(row=settings_row, column=0, padx=(0, 10), pady=10, sticky="e")
 limit_field = ctk.CTkEntry(settings_frame)
 limit_field.grid(row=settings_row, column=1, padx=(0, 0), pady=10, sticky="w")
-limit_field.insert(0, "5")
+limit_field.insert(0, "6")
 settings_row += 1
 
 songs_per_row = None
@@ -402,15 +425,16 @@ def go_to_song_page(song_data):
 
     song_title = song_data["song_name"]
     song_artist = song_data["artist_name"]
-    title_label = ctk.CTkLabel(header_frame, text=f'{song_title} by {song_artist}', font=("Arial", 40, "bold"), justify="left")
+    title_label = ctk.CTkLabel(header_frame, text=f'{song_title} \nby {song_artist}', font=("Arial", 40, "bold"), justify="left")
     title_label.pack(anchor="w")
     
     skips = song_data["skips"]
     times_played = song_data["times_played"]
+    total_mins = sum(song_data["all_miliseconds"]) / 1000
     registered_times_played = song_data["registered_times_played"]
     average_time_listened = round(song_data['average_time_listened'] / 1000)
 
-    song_info_text = f"Times played (<30s): {times_played} \nTimes played (=>30s): {registered_times_played} \nTimes skiped: {skips} \nAverage time listened: {average_time_listened} seconds \nFirst time listened: {pf.make_date_prettier(song_data["timestamps"][0])} \nLast time listened: {pf.make_date_prettier(song_data["timestamps"][-1])} \n"
+    song_info_text = f"Times played (<30s): {times_played} \nTimes played (=>30s): {registered_times_played} \nTimes skiped: {skips} \nAverage time listened: {average_time_listened} seconds \nFirst time listened: {pf.make_date_prettier(song_data["timestamps"][0])} \nLast time listened: {pf.make_date_prettier(song_data["timestamps"][-1])} \nTotal minutes listened: {int(total_mins)}"
     song_info_text = song_info_text[:-1]
     song_info = ctk.CTkLabel(info_frame, text=song_info_text, font=("Arial", 25), justify="left")
     song_info.pack(padx=23, pady=10, anchor="w")
@@ -452,6 +476,7 @@ def initialize_song_page():
     songs_to_use = []
 
     # recalc unfucked_data using timestamps
+    _unfucked_data = None
     _unfucked_data = unfucked_data.copy()
     for_removing = []
     for song in _unfucked_data:
