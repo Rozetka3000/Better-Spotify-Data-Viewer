@@ -147,7 +147,7 @@ def unfuck_the_data():
             if artist is not None:
                 data['artist_name'] = artist
             else:
-                data["artist_name"] - "Unknown Artist"
+                data["artist_name"] = "Unknown Artist"
         
     
     good_data = []
