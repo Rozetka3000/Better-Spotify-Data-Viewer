@@ -437,7 +437,7 @@ def initialize_song_page():
     songs_to_use = []
 
     # recalc unfucked_data using timestamps
-    _unfucked_data = unfucked_data
+    _unfucked_data = unfucked_data.copy()
     for_removing = []
     for song in _unfucked_data:
         timestamps = song["timestamps"]
@@ -626,8 +626,11 @@ def initialize_song_page():
         total_mins = total_ms / 1000 / 60
         total_hours = total_mins / 60
 
-        song_label = ctk.CTkLabel(main_frame, text=f"From {start_date} until {end_date}, you've listened to:\n {int(total_mins)} minutes, aka {int(total_hours)} hours", font=("Arial", 30))
+        total_songs = len(_unfucked_data)
+
+        song_label = ctk.CTkLabel(main_frame, text=f"From {start_date} until {end_date}, you've listened to:\n {int(total_mins)} minutes, aka {int(total_hours)} hours \n In those dates you listened to {total_songs} songs", font=("Arial", 30))
         song_label.pack(pady=10)
+
 
 
 
