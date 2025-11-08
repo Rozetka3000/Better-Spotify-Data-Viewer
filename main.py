@@ -6,8 +6,9 @@ import processFunctions as pf
 import base64
 from requests import post
 import os
-from datetime import date
 from datetime import datetime
+import time
+from collections import defaultdict
 
 client_id = pf.client_id
 client_secret = pf.client_secret
@@ -114,57 +115,66 @@ else:
 
 def unfuck_the_data():
     global unworked_data
-    already_checked = []
-    good_data = []
 
-    i = 1
+    songs_by_name = defaultdict(lambda: {
+        'timestamps': [],
+        'all_miliseconds': [],
+        'skips': 0,
+        'song_id': None,
+        'artist_name': None
+    })
+
     for song in unworked_data:
         song_name = song['master_metadata_track_name']
+        data = songs_by_name[song_name]
         
-        if song_name in already_checked:
-            continue
+        data["timestamps"].append(pf.spotify_time_to_normal_time(song["ts"]))
+        data['all_miliseconds'].append(song["ms_played"])
 
-        already_checked.append(song_name)
+        if song.get("skipped") == True:
+            data["skips"] += 1
 
-        song_data = {}
-        skips = 0
-        timestamps = []
-        all_miliseconds = []
-        for this_song in unworked_data:
-            if this_song["master_metadata_track_name"] == song_name:
-                timestamps.append(pf.spotify_time_to_normal_time(this_song["ts"]))
-                all_miliseconds.append(this_song["ms_played"])
+        if data['song_id'] is None:
+            song_id = song.get('spotify_track_uri')
 
-                if this_song["skipped"] == True:
-                    skips += 1
+            if song_id is not None:
+                data['song_id'] = song_id.replace('spotify:track:', '')
+            else:
+                data['song_id'] = "unknown"
+            
+            artist = song.get('master_metadata_album_artist_name')
+
+            if artist is not None:
+                data['artist_name'] = artist
+            else:
+                data["artist_name"] - "Unknown Artist"
         
-        average_ms = sum(all_miliseconds) / len(all_miliseconds)
+    
+    good_data = []
+    i = 1
+    for song_name, data in songs_by_name.items():
+        times_played = len(data["all_miliseconds"])
+        registered_times_played = 0
 
-        song_data["timestamps"] = timestamps
-        song_data["all_miliseconds"] = all_miliseconds
-        song_data["average_time_listened"] = average_ms
+        for j in range(len(data["all_miliseconds"])):
+            if data["all_miliseconds"][j] >= 30000:
+                registered_times_played += 1
 
-        song_data["skips"] = skips
+        song_data = {
+            "song_name": song_name,
+            "timestamps": data['timestamps'],
+            "all_miliseconds": data['all_miliseconds'],
+            "average_time_listened": sum(data['all_miliseconds']) / len(data['all_miliseconds']),
+            "skips": data['skips'],
+            "song_id": data['song_id'],
+            "artist_name": data['artist_name'],
+            "times_played": times_played,
+            "registered_times_played": registered_times_played
+        }
 
-        song_data["song_name"] = song_name
-
-        song_id = song['spotify_track_uri'].replace('spotify:track:', '')
-        song_data["song_id"] = song_id
-
-        artist = song['master_metadata_album_artist_name']
-        song_data["artist_name"] = artist
-        
-        unchecked_times_played = pf.count_plays(song["master_metadata_track_name"], unworked_data, False)
-        checked_times_played = pf.count_plays(song["master_metadata_track_name"], unworked_data, True)
-        song_data["times_played"] = unchecked_times_played
-        song_data["registered_times_played"] = checked_times_played
-
-        #song_cover = pf.get_song_cover(song_id)
-        #song_data["cover"] = song_cover
-        
         good_data.append(song_data)
-        
         i += 1
+        print(song_name)
         print(f"Unfucked the {i}th song")
 
     json_unfucked_data = json.dumps(good_data)
@@ -177,7 +187,12 @@ if os.path.exists(unfucked_data_path):
     unfucked_json = open(unfucked_data_path, 'r', encoding="utf-8")
     unfucked_data = json.load(unfucked_json)
 else:
+    start_time = time.perf_counter()
     unfucked_data = unfuck_the_data()
+    end_time = time.perf_counter()
+    elapsed_time_ms = (end_time - start_time) * 1000
+
+    print(f"Unfuck time: {int(elapsed_time_ms)} ms / {int(elapsed_time_ms / 1000)} secs / {elapsed_time_ms / 1000 / 60} min")
 
 
 # Scroll huita
