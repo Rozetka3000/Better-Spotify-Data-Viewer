@@ -215,11 +215,14 @@ data_deleting_warning_label.grid(row=0, column=0, pady=10, padx=10)
 def delete_data(option):
     if option == 0:
         os.remove(unfucked_data_path)
+
+        quit()
     elif option == 1:
         if os.path.exists(unfucked_data_path):
             os.remove(unfucked_data_path)
 
         os.remove(stitched_data_path)
+        quit()
 
 delete_unfucked_data_btn = ctk.CTkButton(data_management_toplevel, text="Delete your processed data", command=lambda: delete_data(0))
 delete_unfucked_data_btn.grid(row=1, column=0, pady=10, padx=20)
