@@ -9,7 +9,6 @@ import os
 from datetime import datetime
 import time
 from collections import defaultdict
-import gc
 
 client_id = pf.client_id
 client_secret = pf.client_secret
@@ -205,6 +204,7 @@ def on_mouse_wheel(event):
     # Multiply the scroll amount for faster scrolling
     main_frame._parent_canvas.yview_scroll(int(-1 * (event.delta / 120) * 6), "units")
 
+# region Data management top leve
 data_management_toplevel = ctk.CTkToplevel(app)
 data_management_toplevel.resizable(False, False)
 data_management_toplevel.title("Data management")
@@ -229,9 +229,10 @@ delete_unfucked_data_btn.grid(row=1, column=0, pady=10, padx=20)
 
 delete_all_data_btn = ctk.CTkButton(data_management_toplevel, text="Delete ALL your data", command=lambda: delete_data(1))
 delete_all_data_btn.grid(row=2, column=0, pady=10, padx=20)
+#endregion
 
 
-
+# region Settings toplevel
 settings_toplevel = ctk.CTkToplevel(app)
 settings_toplevel.resizable(False, False)
 settings_toplevel.geometry("500x400")
@@ -325,10 +326,18 @@ end_year.grid(row=settings_row, column=3, padx=(0, 5))
 end_year.insert(0, get_earliest_and_last_timestamps(1, "YY"))
 settings_row += 1
 
-order_label = ctk.CTkLabel(settings_frame, text="Order of songs:")
+order_label = ctk.CTkLabel(settings_frame, text="Displaying of data:")
 order_label.grid(row=settings_row, column=0, padx=(0, 10), pady=10, sticky="e")
 order_dropdown = ctk.CTkComboBox(settings_frame, 
-                                 values=["Chronologicaly", "Chronologicaly descending", "Your most streamed", "Your least streamed", "Average time listened (by %)", "Skips", "Minutes listened since X"])
+                                 values=["Chronologicaly", 
+                                        "Chronologicaly descending",
+                                        "Your most streamed",
+                                        "Your least streamed",
+                                        "Average time listened (by %)",
+                                        "Skips",
+                                        "Minutes listened since X",
+                                        "Search song"
+                                        ])
 order_dropdown.set("Your most streamed")
 order_dropdown.grid(row=settings_row, column=1, padx=(0, 0), pady=0, sticky="w")
 settings_row += 1
@@ -372,6 +381,7 @@ config_btn = ctk.CTkButton(
 )
 config_btn.grid(row=settings_row, column=0, columnspan=2, pady=20, sticky="s")
 settings_row += 1
+# endregion
 
 def sorted_songs(crescator):
     songs={}
@@ -673,7 +683,30 @@ def initialize_song_page():
 
         song_label = ctk.CTkLabel(main_frame, text=f"From {start_date} until {end_date}, you've listened to:\n {int(total_mins)} minutes, aka {int(total_hours)} hours \n In those dates you listened to {total_songs} songs", font=("Arial", 30))
         song_label.pack(pady=10)
+    elif order_dropdown.get() == "Search song":
+        main_frame.grid_columnconfigure(0, weight=0)  # Label column - don't expand
+        main_frame.grid_columnconfigure(1, weight=1)  # Entry column - can expand
+        main_frame.grid_columnconfigure(2, weight=0)  # Button column - don't expand
 
+        search_song_label = ctk.CTkLabel(main_frame, text="Search a song:", font=("Arial", 30))
+        search_song_field = ctk.CTkEntry(main_frame, placeholder_text="Song name...", font=("Arial", 20))
+
+        search_song_label.grid(row=0, column=0, padx=(20, 10), pady=20, sticky="w")
+        search_song_field.grid(row=0, column=1, padx=(0, 10), pady=20, sticky="ew")
+        
+        def handle_search():
+            result = pf.search_for_song(search_song_field.get(), _unfucked_data)
+
+
+            if result is not None:
+                song_data = pf.get_song_display_info(result["song_id"], _unfucked_data)
+
+                process_song(song_data, 1, 0, [])
+
+                main_frame.update()
+        
+        search_song_btn = ctk.CTkButton(main_frame, text="Search for the song", command=lambda: handle_search(), font=("Arial", 20))
+        search_song_btn.grid(row=0, column=1, sticky="e")
 
 
 
