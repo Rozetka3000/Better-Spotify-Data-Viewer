@@ -61,6 +61,8 @@ jsonData = None
 unworked_data = None
 unfucked_data = None
 
+topartists_level_toplevel = None
+
 if os.path.exists(stitched_data_path):
     with open(stitched_data_path, 'r', encoding="utf-8") as jsonData:
         unworked_data = json.load(jsonData)
@@ -408,6 +410,7 @@ def back_to_normal_page():
     for widget in main_frame.winfo_children():
         widget.destroy()
 
+    topartists_level_toplevel.destroy()
     set_bs()
 
 def go_to_song_page(song_data):
@@ -496,7 +499,7 @@ def go_to_artist_page(artist_name, artist_data):
     else:
         times_played = registered_times_played
 
-    artist_info_text = f"Times listened: {times_played} \nTotal minutes: {total_mins}"
+    artist_info_text = f"Times listened: {times_played} \nTotal minutes: {int(total_mins)} \nSongs from artist: {artist_data["number_of_songs"]}"
     artist_info = ctk.CTkLabel(info_frame, text=artist_info_text, font=("Arial", 25), justify="left")
     artist_info.pack(padx=23, pady=10, anchor="w")
 
@@ -779,7 +782,6 @@ def initialize_song_page():
         topartists_level_toplevel = ctk.CTkToplevel(app)
         topartists_level_toplevel.resizable(False, False)
         topartists_level_toplevel.title("Top artist search settings")
-        #topartists_level_toplevel.geometry("300x200")
 
         artist_sorting_label = ctk.CTkLabel(topartists_level_toplevel, text="Artist sorting method:")
         artist_sorting_label.grid(row=0, column=0, padx=10, pady=10)
@@ -799,11 +801,13 @@ def initialize_song_page():
                     artists[artist]["registered_times_played"] += registered_times_played
                     artists[artist]["times_played"] += times_played
                     artists[artist]["total_ms"] += total_ms
+                    artists[artist]["number_of_songs"] += 1
                 else:
                     artists[artist] = {
                         "registered_times_played": registered_times_played,
                         "times_played": times_played,
-                        "total_ms": total_ms
+                        "total_ms": total_ms,
+                        "number_of_songs": 1
                     }
 
             sorted_artists = None
