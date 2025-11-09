@@ -483,7 +483,7 @@ def go_to_artist_page(artist_name, artist_data):
     header_frame = ctk.CTkFrame(info_frame, fg_color="transparent")
     header_frame.pack(fill="x", padx=20, pady=20)
 
-    title_label = ctk.CTkLabel(header_frame, text=artist_image, font=("Arial", 40, "bold"), justify="left")
+    title_label = ctk.CTkLabel(header_frame, text=artist_name, font=("Arial", 40, "bold"), justify="left")
     title_label.pack(anchor="w")
     
     _times_played = artist_data["times_played"]
