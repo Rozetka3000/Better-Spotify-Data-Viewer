@@ -67,7 +67,24 @@ def get_artist(artist_id):
     result = requests.get(query_url, headers=headers)
     json_result = json.loads(result.content)
 
-    return json_result
+    return 
+
+def get_artist_id(artist_name):
+    url = "https://api.spotify.com/v1/search/"
+    headers = get_auth_header(token)
+    params = {
+        "q": artist_name,
+        "type": "artist",
+        "limit": 1
+    }
+    response = requests.get(url, headers=headers, params=params)
+    data = response.json()
+
+    if data["artists"]["items"]:
+        artist = data["artists"]["items"][0]
+        return artist["id"]
+    else:
+        return None
 
 # only to be used before you unfuck the data
 def count_plays(song_name, unworked_data, thirty_sec_rule):
@@ -146,6 +163,33 @@ def handle_cover_bullshit(song_id, ctk, size=(640, 640)):
             image.save(f, "JPEG")
             
         return ctk_image
+
+def handle_artist_image_bullshit(artist_name, ctk, size=(640, 640)):
+    cached_image_path = os.path.join(cached_images_folder, f"{artist_name}.jpg")
+    if os.path.exists(cached_image_path):
+        image = Image.open(cached_image_path)
+        ctk_image = ctk.CTkImage(light_image=image, dark_image=image, size=size)
+        return ctk_image
+    else:
+        artist_id = get_artist_id(artist_name)
+        url = f"https://api.spotify.com/v1/artists/{artist_id}"
+        headers = get_auth_header(token)
+        response = requests.get(url, headers=headers)
+        data = response.json()
+        
+        artist_img_url = data["images"][0]["url"]
+
+        response = requests.get(artist_img_url)
+        response.raise_for_status()
+        image = Image.open(BytesIO(response.content))
+        ctk_image = ctk.CTkImage(light_image=image, dark_image=image, size=size)
+
+        with open(cached_image_path, 'wb') as f:
+            image.save(f, "JPEG")
+            
+        return ctk_image
+
+
 
 def get_song_length(song_id):
     url = f"https://api.spotify.com/v1/tracks/{song_id}"

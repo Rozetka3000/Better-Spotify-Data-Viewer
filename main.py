@@ -336,7 +336,8 @@ order_dropdown = ctk.CTkComboBox(settings_frame,
                                         "Average time listened (by %)",
                                         "Skips",
                                         "Minutes listened since X",
-                                        "Search song"
+                                        "Search song",
+                                        "Top artists"
                                         ])
 order_dropdown.set("Your most streamed")
 order_dropdown.grid(row=settings_row, column=1, padx=(0, 0), pady=0, sticky="w")
@@ -443,11 +444,11 @@ def go_to_song_page(song_data):
     
     skips = song_data["skips"]
     times_played = song_data["times_played"]
-    total_mins = sum(song_data["all_miliseconds"]) / 1000
+    total_mins = sum(song_data["all_miliseconds"]) / 1000 / 60
     registered_times_played = song_data["registered_times_played"]
-    average_time_listened = round(song_data['average_time_listened'] / 1000)
+    average_time_listened = round(song_data['average_time_listened'] / 1000 / 60)
 
-    song_info_text = f"Times played (<30s): {times_played} \nTimes played (=>30s): {registered_times_played} \nTimes skiped: {skips} \nAverage time listened: {average_time_listened} seconds \nFirst time listened: {pf.make_date_prettier(song_data["timestamps"][0])} \nLast time listened: {pf.make_date_prettier(song_data["timestamps"][-1])} \nTotal minutes listened: {int(total_mins)}"
+    song_info_text = f"Times played (<30s): {times_played} \nTimes played (=>30s): {registered_times_played} \nTimes skiped: {skips} \nAverage time listened: {average_time_listened} minutes \nFirst time listened: {pf.make_date_prettier(song_data["timestamps"][0])} \nLast time listened: {pf.make_date_prettier(song_data["timestamps"][-1])} \nTotal minutes listened: {int(total_mins)}"
     song_info_text = song_info_text[:-1]
     song_info = ctk.CTkLabel(info_frame, text=song_info_text, font=("Arial", 25), justify="left")
     song_info.pack(padx=23, pady=10, anchor="w")
@@ -455,6 +456,73 @@ def go_to_song_page(song_data):
     back_btn = ctk.CTkButton(main_frame, text="Back", font=("Arial", 20), command=lambda: back_to_normal_page())
     back_btn.pack(side="bottom", anchor="se", padx=20, pady=130)
     
+def go_to_artist_page(artist_name, artist_data):
+    for widget in main_frame.winfo_children():
+        widget.destroy()
+
+    center_frame = ctk.CTkFrame(main_frame, fg_color="transparent")
+    center_frame.pack(expand=True, fill="both", padx=50, pady=50)
+
+    center_frame.grid_columnconfigure(0, weight=1)
+    center_frame.grid_columnconfigure(1, weight=2)
+    center_frame.grid_rowconfigure(0, weight=1)
+
+    # Artist image
+    left_frame = ctk.CTkFrame(center_frame)
+    left_frame.grid(row=0, column=0, sticky="nsew", padx=(0, 20))
+
+    artist_image = pf.handle_artist_image_bullshit(artist_name, ctk, size=(400, 400))
+    artist_image_label = ctk.CTkLabel(left_frame, image=artist_image, text="")
+    artist_image_label.pack(expand=True, padx=20, pady=20)
+
+    # Info and bs
+    info_frame = ctk.CTkFrame(center_frame)
+    info_frame.grid(row=0, column=1, sticky="nsew")
+
+    # Header (idi nahui)
+    header_frame = ctk.CTkFrame(info_frame, fg_color="transparent")
+    header_frame.pack(fill="x", padx=20, pady=20)
+
+    title_label = ctk.CTkLabel(header_frame, text=artist_image, font=("Arial", 40, "bold"), justify="left")
+    title_label.pack(anchor="w")
+    
+    _times_played = artist_data["times_played"]
+    total_mins = artist_data["total_ms"] / 60000
+    registered_times_played = artist_data["registered_times_played"]
+
+    times_played = 0
+    if thirty_sec_rule:
+        times_played = _times_played
+    else:
+        times_played = registered_times_played
+
+    artist_info_text = f"Times listened: {times_played} \nTotal minutes: {total_mins}"
+    artist_info = ctk.CTkLabel(info_frame, text=artist_info_text, font=("Arial", 25), justify="left")
+    artist_info.pack(padx=23, pady=10, anchor="w")
+
+    back_btn = ctk.CTkButton(main_frame, text="Back", font=("Arial", 20), command=lambda: back_to_normal_page())
+    back_btn.pack(side="bottom", anchor="se", padx=20, pady=130)
+
+def process_artist(artist_name, artist_data, row, col):
+    artist_frame = ctk.CTkFrame(main_frame)
+    artist_frame.grid(row=row, column=col, padx=10, pady=10, sticky="nsew")
+
+    total_listens = 0
+    if thirty_sec_rule:
+        total_listens = artist_data["registered_times_played"]
+    else:
+        total_listens = artist_data["times_played"]
+
+    mins_listened = artist_data["total_ms"] / 1000 / 60
+
+    artist_info = f"Artist name: {artist_name} \nTimes played: {total_listens} \nTime listened: {int(mins_listened)} mins / {int(mins_listened / 60)} hours"
+
+    artist_label = ctk.CTkLabel(artist_frame, text=artist_info, font=("Arial", 14))
+    artist_image = pf.handle_artist_image_bullshit(artist_name, ctk, size=(200, 200))
+    artist_image_btn = ctk.CTkButton(artist_frame, image=artist_image, text="", command=lambda: go_to_artist_page(artist_name, artist_data), fg_color="black", hover_color="white")
+
+    artist_label.pack(pady=10)
+    artist_image_btn.pack(pady=10)
 
 def process_song(song_data, row, col, data_to_show):
     song_frame = ctk.CTkFrame(main_frame)
@@ -531,8 +599,7 @@ def initialize_song_page():
 
     for song in for_removing:
         _unfucked_data.remove(song)
-    
-   
+      
     row = 0
     col = 0
 
@@ -684,9 +751,9 @@ def initialize_song_page():
         song_label = ctk.CTkLabel(main_frame, text=f"From {start_date} until {end_date}, you've listened to:\n {int(total_mins)} minutes, aka {int(total_hours)} hours \n In those dates you listened to {total_songs} songs", font=("Arial", 30))
         song_label.pack(pady=10)
     elif order_dropdown.get() == "Search song":
-        main_frame.grid_columnconfigure(0, weight=0)  # Label column - don't expand
-        main_frame.grid_columnconfigure(1, weight=1)  # Entry column - can expand
-        main_frame.grid_columnconfigure(2, weight=0)  # Button column - don't expand
+        main_frame.grid_columnconfigure(0, weight=0)
+        main_frame.grid_columnconfigure(1, weight=1)
+        main_frame.grid_columnconfigure(2, weight=0)
 
         search_song_label = ctk.CTkLabel(main_frame, text="Search a song:", font=("Arial", 30))
         search_song_field = ctk.CTkEntry(main_frame, placeholder_text="Song name...", font=("Arial", 20))
@@ -697,7 +764,6 @@ def initialize_song_page():
         def handle_search():
             result = pf.search_for_song(search_song_field.get(), _unfucked_data)
 
-
             if result is not None:
                 song_data = pf.get_song_display_info(result["song_id"], _unfucked_data)
 
@@ -707,6 +773,63 @@ def initialize_song_page():
         
         search_song_btn = ctk.CTkButton(main_frame, text="Search for the song", command=lambda: handle_search(), font=("Arial", 20))
         search_song_btn.grid(row=0, column=1, sticky="e")
+    elif order_dropdown.get() == "Top artists":
+        reverse = True
+
+        topartists_level_toplevel = ctk.CTkToplevel(app)
+        topartists_level_toplevel.resizable(False, False)
+        topartists_level_toplevel.title("Top artist search settings")
+        #topartists_level_toplevel.geometry("300x200")
+
+        artist_sorting_label = ctk.CTkLabel(topartists_level_toplevel, text="Artist sorting method:")
+        artist_sorting_label.grid(row=0, column=0, padx=10, pady=10)
+        
+        artist_sorting_method = ctk.CTkComboBox(topartists_level_toplevel, values=["Sort by number of plays (Wrapped method)", "Sort by total time listened"])
+        artist_sorting_method.grid(row=1, column=0, padx=10, pady=10)
+
+        def process_top_artists(_unfucked_data, row, col):
+            artists = {}
+            for song in _unfucked_data:
+                artist = song["artist_name"]
+                registered_times_played = song["registered_times_played"]
+                times_played = song["times_played"]
+                total_ms = sum(song["all_miliseconds"])
+
+                if artist in artists:
+                    artists[artist]["registered_times_played"] += registered_times_played
+                    artists[artist]["times_played"] += times_played
+                    artists[artist]["total_ms"] += total_ms
+                else:
+                    artists[artist] = {
+                        "registered_times_played": registered_times_played,
+                        "times_played": times_played,
+                        "total_ms": total_ms
+                    }
+
+            sorted_artists = None
+            if artist_sorting_method.get() == "Sort by number of plays (Wrapped method)":
+                if thirty_sec_rule:
+                    sorted_artists = sorted(artists.items(), key=lambda x: x[1]['registered_times_played'], reverse=reverse)
+                else:
+                    sorted_artists = sorted(artists.items(), key=lambda x: x[1]['times_played'], reverse=reverse)
+            elif artist_sorting_method.get() == "Sort by total time listened":
+                sorted_artists = sorted(artists.items(), key=lambda x: x[1]['total_ms'], reverse=reverse)
+
+            index = 0
+            for key, val in sorted_artists:
+                if index < limit:
+                    process_artist(key, val, row=row, col=col)
+
+                    col += 1
+                    if col >= songs_per_row:
+                        col = 0
+                        row += 1
+
+                    main_frame.update()
+                    index += 1
+
+        go_btn = ctk.CTkButton(topartists_level_toplevel, command=lambda: process_top_artists(_unfucked_data, row, col), text="Go!")
+        go_btn.grid(row=2, column=0, padx=10, pady=10)
 
 
 
