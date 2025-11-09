@@ -182,7 +182,10 @@ def handle_artist_image_bullshit(artist_name, ctk, size=(640, 640)):
         response = requests.get(artist_img_url)
         response.raise_for_status()
         image = Image.open(BytesIO(response.content))
-        ctk_image = ctk.CTkImage(light_image=image, dark_image=image, size=size)
+
+        ctk_image = None
+        if image:
+            ctk_image = ctk.CTkImage(light_image=image, dark_image=image, size=size)
 
         with open(cached_image_path, 'wb') as f:
             image.save(f, "JPEG")

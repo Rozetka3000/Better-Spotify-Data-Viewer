@@ -136,17 +136,17 @@ def unfuck_the_data():
         if song.get("skipped") == True:
             data["skips"] += 1
 
-        if data['song_id'] is None:
+        if data['song_id'] == None:
             song_id = song.get('spotify_track_uri')
 
-            if song_id is not None:
+            if song_id != None:
                 data['song_id'] = song_id.replace('spotify:track:', '')
             else:
                 data['song_id'] = "unknown"
             
             artist = song.get('master_metadata_album_artist_name')
 
-            if artist is not None:
+            if artist != None:
                 data['artist_name'] = artist
             else:
                 data["artist_name"] = "Unknown Artist"
@@ -360,7 +360,7 @@ def set_bs():
     end_year_val = end_year.get()
 
     start_date = datetime(year=int(start_year_val), month=int(start_month_val), day=int(start_day_val))
-    end_date = datetime(year=int(end_year_val), month=int(end_month_val), day=int(end_day_val))
+    end_date = datetime(year=int(end_year_val), month=int(end_month_val), day=int(end_day_val), hour=23, minute=59, second=59)
     
     for widget in main_frame.winfo_children():
         widget.destroy()
@@ -446,7 +446,6 @@ def go_to_song_page(song_data):
     title_label.pack(anchor="w")
     
     skips = song_data["skips"]
-    times_played = song_data["times_played"]
 
     total_100_percent = 0
     song_length = pf.get_song_length(song_data["song_id"])
@@ -456,10 +455,9 @@ def go_to_song_page(song_data):
         if ms >= song_length:
             total_100_percent += 1
 
-    registered_times_played = song_data["registered_times_played"]
     average_time_listened = round(song_data['average_time_listened'] / 1000 / 60)
 
-    song_info_text = f"Times played (<30s): {times_played} \nTimes played (=>30s): {registered_times_played} \nTimes skiped: {skips} \nAverage time listened: {average_time_listened} minutes \nFirst time listened: {pf.make_date_prettier(song_data["timestamps"][0])} \nLast time listened: {pf.make_date_prettier(song_data["timestamps"][-1])} \nTotal minutes listened: {int(total_mins)} \nListened to the end: {total_100_percent} times \n"
+    song_info_text = f"Times played (<30s): {song_data["times_played"]} \nTimes played (=>30s): {song_data["registered_times_played"]} \nTimes skiped: {skips} \nAverage time listened: {average_time_listened} minutes \nFirst time listened: {pf.make_date_prettier(song_data["timestamps"][0])} \nLast time listened: {pf.make_date_prettier(song_data["timestamps"][-1])} \nTotal minutes listened: {int(total_mins)} \nListened to the end: {total_100_percent} times \n"
     song_info_text = song_info_text[:-1]
     song_info = ctk.CTkLabel(info_frame, text=song_info_text, font=("Arial", 25), justify="left")
     song_info.pack(padx=23, pady=10, anchor="w")
@@ -497,15 +495,13 @@ def go_to_artist_page(artist_name, artist_data):
     title_label = ctk.CTkLabel(header_frame, text=artist_name, font=("Arial", 40, "bold"), justify="left")
     title_label.pack(anchor="w")
     
-    _times_played = artist_data["times_played"]
     total_mins = artist_data["total_ms"] / 60000
-    registered_times_played = artist_data["registered_times_played"]
 
     times_played = 0
     if thirty_sec_rule:
-        times_played = _times_played
+        times_played = artist_data["registered_times_played"]
     else:
-        times_played = registered_times_played
+        times_played = artist_data["times_played"]
 
     artist_info_text = f"Times listened: {times_played} \nTotal minutes: {int(total_mins)} \nSongs from artist: {artist_data["number_of_songs"]}"
     artist_info = ctk.CTkLabel(info_frame, text=artist_info_text, font=("Arial", 25), justify="left")
@@ -635,7 +631,7 @@ def initialize_song_page():
             if song_id not in songs_analized:
                 song_data = pf.get_song_display_info(song_id, _unfucked_data)
 
-                if thirty_sec_rule and song_data["registered_times_played"] is 0:
+                if thirty_sec_rule and song_data["registered_times_played"] == 0:
                     continue
                     
                 songs_analized.append(song_id)
@@ -677,7 +673,7 @@ def initialize_song_page():
             if song_id not in songs_analized:
                 song_data = pf.get_song_display_info(song_id, _unfucked_data)
 
-                if thirty_sec_rule and song_data["registered_times_played"] is 0:
+                if thirty_sec_rule and song_data["registered_times_played"] == 0:
                     continue
                     
                 songs_analized.append(song_id)
@@ -705,7 +701,7 @@ def initialize_song_page():
             if song_id not in songs_analized:
                 song_data = pf.get_song_display_info(song_id, _unfucked_data)
 
-                if thirty_sec_rule and song_data["registered_times_played"] is 0:
+                if thirty_sec_rule and song_data["registered_times_played"] == 0:
                     continue
                     
                 songs_analized.append(song_id)
@@ -734,7 +730,7 @@ def initialize_song_page():
             if song_id not in songs_analized:
                 song_data = pf.get_song_display_info(song_id, _unfucked_data)
 
-                if thirty_sec_rule and song_data["registered_times_played"] is 0:
+                if thirty_sec_rule and song_data["registered_times_played"] == 0:
                     continue
                     
                 songs_analized.append(song_id)
@@ -775,7 +771,7 @@ def initialize_song_page():
         def handle_search():
             result = pf.search_for_song(search_song_field.get(), _unfucked_data)
 
-            if result is not None:
+            if result != None:
                 song_data = pf.get_song_display_info(result["song_id"], _unfucked_data)
 
                 process_song(song_data, 1, 0, [])
