@@ -447,11 +447,19 @@ def go_to_song_page(song_data):
     
     skips = song_data["skips"]
     times_played = song_data["times_played"]
-    total_mins = sum(song_data["all_miliseconds"]) / 1000 / 60
+
+    total_100_percent = 0
+    song_length = pf.get_song_length(song_data["song_id"])
+    total_mins = sum(song_data["all_miliseconds"]) / 60000
+
+    for ms in song_data["all_miliseconds"]:
+        if ms >= song_length:
+            total_100_percent += 1
+
     registered_times_played = song_data["registered_times_played"]
     average_time_listened = round(song_data['average_time_listened'] / 1000 / 60)
 
-    song_info_text = f"Times played (<30s): {times_played} \nTimes played (=>30s): {registered_times_played} \nTimes skiped: {skips} \nAverage time listened: {average_time_listened} minutes \nFirst time listened: {pf.make_date_prettier(song_data["timestamps"][0])} \nLast time listened: {pf.make_date_prettier(song_data["timestamps"][-1])} \nTotal minutes listened: {int(total_mins)}"
+    song_info_text = f"Times played (<30s): {times_played} \nTimes played (=>30s): {registered_times_played} \nTimes skiped: {skips} \nAverage time listened: {average_time_listened} minutes \nFirst time listened: {pf.make_date_prettier(song_data["timestamps"][0])} \nLast time listened: {pf.make_date_prettier(song_data["timestamps"][-1])} \nTotal minutes listened: {int(total_mins)} \nListened to the end: {total_100_percent} times \n"
     song_info_text = song_info_text[:-1]
     song_info = ctk.CTkLabel(info_frame, text=song_info_text, font=("Arial", 25), justify="left")
     song_info.pack(padx=23, pady=10, anchor="w")
