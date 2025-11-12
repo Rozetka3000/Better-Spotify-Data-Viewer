@@ -85,6 +85,23 @@ def get_artist_id(artist_name):
         return artist["id"]
     else:
         return None
+    
+def get_album_id(album_name):
+    url = "https://api.spotify.com/v1/search/"
+    headers = get_auth_header(token)
+    params = {
+        "q": album_name,
+        "type": "album",
+        "limit": 1
+    }
+    response = requests.get(url, headers=headers, params=params)
+    data = response.json()
+
+    if data["albums"]["items"]:
+        album = data["albums"]["items"][0]
+        return album["id"]
+    else:
+        return None
 
 # only to be used before you unfuck the data
 def count_plays(song_name, unworked_data, thirty_sec_rule):
@@ -192,6 +209,56 @@ def handle_artist_image_bullshit(artist_name, ctk, size=(640, 640)):
             
         return ctk_image
 
+def handle_album_image_bullshit(album_name, ctk, size=(640, 640)):
+    forbidden_chars = '<>:"/\\|?*'
+    has_forbidden = any(char in album_name for char in forbidden_chars)
+
+    if not has_forbidden:        
+        cached_image_path = os.path.join(cached_images_folder, f"album_{album_name}.jpg")
+
+        if os.path.exists(cached_image_path):
+            image = Image.open(cached_image_path)
+            ctk_image = ctk.CTkImage(light_image=image, dark_image=image, size=size)
+            return ctk_image
+        else:
+            album_id = get_album_id(album_name)
+            url = f"https://api.spotify.com/v1/albums/{album_id}"
+            headers = get_auth_header(token)
+            response = requests.get(url, headers=headers)
+            data = response.json()
+                
+            album_img_url = data["images"][0]["url"]
+
+            response = requests.get(album_img_url)
+            response.raise_for_status()
+            image = Image.open(BytesIO(response.content))
+
+            ctk_image = None
+            if image:
+                ctk_image = ctk.CTkImage(light_image=image, dark_image=image, size=size)
+
+            with open(cached_image_path, 'wb') as f:
+                image.save(f, "JPEG")
+            
+            return ctk_image
+    else:            
+        album_id = get_album_id(album_name)
+        url = f"https://api.spotify.com/v1/albums/{album_id}"
+        headers = get_auth_header(token)
+        response = requests.get(url, headers=headers)
+        data = response.json()
+            
+        album_img_url = data["images"][0]["url"]
+
+        response = requests.get(album_img_url)
+        response.raise_for_status()
+        image = Image.open(BytesIO(response.content))
+
+        ctk_image = None
+        if image:
+            ctk_image = ctk.CTkImage(light_image=image, dark_image=image, size=size)
+
+        return ctk_image
 
 
 def get_song_length(song_id):

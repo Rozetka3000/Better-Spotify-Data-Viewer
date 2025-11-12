@@ -123,7 +123,8 @@ def unfuck_the_data():
         'all_miliseconds': [],
         'skips': 0,
         'song_id': None,
-        'artist_name': None
+        'artist_name': None,
+        'album_name': None
     })
 
     for song in unworked_data:
@@ -132,6 +133,11 @@ def unfuck_the_data():
         
         data["timestamps"].append(pf.spotify_time_to_normal_time(song["ts"]))
         data['all_miliseconds'].append(song["ms_played"])
+
+        album_name = song["master_metadata_album_album_name"]
+        if album_name is not None:
+            if album_name != song_name:
+                data["album_name"] = album_name
 
         if song.get("skipped") == True:
             data["skips"] += 1
@@ -170,6 +176,7 @@ def unfuck_the_data():
             "skips": data['skips'],
             "song_id": data['song_id'],
             "artist_name": data['artist_name'],
+            "album_name": data['album_name'],
             "times_played": times_played,
             "registered_times_played": registered_times_played
         }
@@ -339,7 +346,8 @@ order_dropdown = ctk.CTkComboBox(settings_frame,
                                         "Skips",
                                         "Minutes listened since X",
                                         "Search song",
-                                        "Top artists"
+                                        "Top artists",
+                                        "Top albums"
                                         ])
 order_dropdown.set("Your most streamed")
 order_dropdown.grid(row=settings_row, column=1, padx=(0, 0), pady=0, sticky="w")
@@ -530,6 +538,29 @@ def process_artist(artist_name, artist_data, row, col):
 
     artist_label.pack(pady=10)
     artist_image_btn.pack(pady=10)
+
+def process_album(album_name, album_data, row, col):
+    album_frame = ctk.CTkFrame(main_frame)
+    album_frame.grid(row=row, column=col, padx=10, pady=10, sticky="nsew")
+
+    registered_times_played = album_data["registered_times_played"]
+    times_played = album_data["times_played"]
+    mins_played = album_data["mins_played"]
+    skips = album_data["skips"]
+    artist_name = album_data["artist_name"]
+
+    album_info = None
+    if thirty_sec_rule:
+        album_info = f"Album name: {album_name} \nArtist name: {artist_name} \nTimes played: {registered_times_played} \nMins played: {mins_played} \nSkips: {skips}"
+    else:
+        album_info = f"Album name: {album_name} \nArtist name: {artist_name} \nTimes played: {times_played} \nMins played: {mins_played} \nSkips: {skips}"
+
+    album_label = ctk.CTkLabel(album_frame, text=album_info, font=("Arial", 14))
+    album_image = pf.handle_album_image_bullshit(album_name, ctk, size=(200, 200))
+    album_image_btn = ctk.CTkLabel(album_frame, image=album_image, text="")
+
+    album_label.pack(pady=10)
+    album_image_btn.pack(pady=10)
 
 def process_song(song_data, row, col, data_to_show):
     song_frame = ctk.CTkFrame(main_frame)
@@ -838,6 +869,71 @@ def initialize_song_page():
 
         go_btn = ctk.CTkButton(topartists_level_toplevel, command=lambda: process_top_artists(_unfucked_data, row, col), text="Go!")
         go_btn.grid(row=2, column=0, padx=10, pady=10)
+    elif order_dropdown.get() == "Top albums":
+        reverse = True
+
+        albums_by_name = defaultdict(lambda: {
+            'registered_times_played': 0,
+            'times_played': 0,
+            'mins_played': 0,
+            'skips': 0,
+            'artist_name': None,
+            'album_id': None
+        })
+        for song in _unfucked_data:
+            album = song["album_name"]
+            data = albums_by_name[album]
+
+            if album is not None:
+                data["registered_times_played"] += song["registered_times_played"]
+                data["times_played"] += song["times_played"]
+
+                data["mins_played"] += sum(song["all_miliseconds"]) / 1000 / 60
+                data["skips"] += song["skips"]
+
+                data["artist_name"] = song["artist_name"]
+
+        processed_albums = {}
+        i = 1
+        for album, data in albums_by_name.items():
+            album_data = {
+                'registered_times_played': data["registered_times_played"],
+                'times_played': data["times_played"],
+                'mins_played': int(data["mins_played"]),
+                'skips': data["skips"],
+                'artist_name': data["artist_name"],
+                'album_id': None
+            }
+
+            processed_albums[album] = album_data
+            i += 1
+            print(f"Completed album {i}, aka {album}")
+
+        sorted_albums = None
+        if thirty_sec_rule:
+            sorted_albums = sorted(processed_albums.items(), key=lambda x: x[1]['registered_times_played'], reverse=reverse)
+        else:
+            sorted_albums = sorted(processed_albums.items(), key=lambda x: x[1]['times_played'], reverse=reverse)
+
+        index = 0
+        for key, val in sorted_albums:
+            if index < limit:
+                album_name = key
+                album_data = val
+
+                process_album(album_name=album_name, album_data=album_data, row=row, col=col)
+
+                col += 1
+                if col >= songs_per_row:
+                    col = 0
+                    row += 1
+
+                main_frame.update()
+                index += 1
+
+
+
+
 
 
 
