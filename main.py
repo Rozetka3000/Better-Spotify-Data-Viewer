@@ -551,9 +551,9 @@ def process_album(album_name, album_data, row, col):
 
     album_info = None
     if thirty_sec_rule:
-        album_info = f"Album name: {album_name} \nArtist name: {artist_name} \nTimes played: {registered_times_played} \nMins played: {mins_played} \nSkips: {skips}"
+        album_info = f"Album name: {album_name[:50]} \nArtist name: {artist_name} \nTimes played: {registered_times_played} \nMins played: {mins_played} \nSkips: {skips}"
     else:
-        album_info = f"Album name: {album_name} \nArtist name: {artist_name} \nTimes played: {times_played} \nMins played: {mins_played} \nSkips: {skips}"
+        album_info = f"Album name: {album_name[:50]} \nArtist name: {artist_name} \nTimes played: {times_played} \nMins played: {mins_played} \nSkips: {skips}"
 
     album_label = ctk.CTkLabel(album_frame, text=album_info, font=("Arial", 14))
     album_image = pf.handle_album_image_bullshit(album_name, ctk, size=(200, 200))
@@ -565,7 +565,9 @@ def process_album(album_name, album_data, row, col):
 def process_song(song_data, row, col, data_to_show):
     song_frame = ctk.CTkFrame(main_frame)
     song_frame.grid(row=row, column=col, padx=10, pady=10, sticky="nsew")
-    song_info = f"Song name: {song_data['song_name']}\nArtist: {song_data['artist_name']}\n"
+
+    song_name = song_data['song_name']
+    song_info = f"Song name: {song_name[:50]}\nArtist: {song_data['artist_name']}\n"
 
     
     for field in data_to_show:
@@ -638,7 +640,7 @@ def initialize_song_page():
     for song in for_removing:
         _unfucked_data.remove(song)
       
-    row = 0
+    row = 1
     col = 0
 
     if order_dropdown.get() == "Your most streamed" or order_dropdown.get() == 'Your least streamed':
@@ -800,14 +802,22 @@ def initialize_song_page():
         search_song_field.grid(row=0, column=1, padx=(0, 10), pady=20, sticky="ew")
         
         def handle_search():
-            result = pf.search_for_song(search_song_field.get(), _unfucked_data)
+            nonlocal row, col
 
-            if result != None:
-                song_data = pf.get_song_display_info(result["song_id"], _unfucked_data)
+            results = pf.search_for_song(search_song_field.get(), _unfucked_data)
 
-                process_song(song_data, 1, 0, [])
+            if results != None:
+                for song in results:
+                    song_data = pf.get_song_display_info(song["song_id"], _unfucked_data)
 
-                main_frame.update()
+                    process_song(song_data, row=row, col=col, data_to_show=[])
+
+                    col += 1
+                    if col >= songs_per_row:
+                        col = 0
+                        row += 1
+
+                    main_frame.update()
         
         search_song_btn = ctk.CTkButton(main_frame, text="Search for the song", command=lambda: handle_search(), font=("Arial", 20))
         search_song_btn.grid(row=0, column=1, sticky="e")
@@ -928,6 +938,7 @@ def initialize_song_page():
                     col = 0
                     row += 1
 
+                print(f"Album {index} finished!")
                 main_frame.update()
                 index += 1
 

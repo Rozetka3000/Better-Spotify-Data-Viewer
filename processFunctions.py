@@ -289,11 +289,13 @@ def make_date_prettier(date):
     return _date.strftime(format)
 
 def search_for_song(song_to_search, data):
+    songs = []
     for song in data:
         if type(song["song_name"]) == str:
-            if song["song_name"].lower() == song_to_search.lower():
-                #print(song)
-                return song
+            if song_to_search.lower() in song["song_name"].lower():
+                songs.append(song)
+
+    return songs
 
 def get_song_display_info(song_id, unfucked_data):
     #image_url = get_song_cover(song_id)
