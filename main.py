@@ -244,7 +244,7 @@ delete_all_data_btn.grid(row=2, column=0, pady=10, padx=20)
 # region Settings toplevel
 settings_toplevel = ctk.CTkToplevel(app)
 settings_toplevel.resizable(False, False)
-settings_toplevel.geometry("500x400")
+settings_toplevel.geometry("500x500")
 settings_toplevel.title("Configuration")
 
 settings_row = 0
@@ -277,6 +277,14 @@ tsr_label = ctk.CTkLabel(settings_frame, text="30 second stream rule:")
 tsr_label.grid(row=settings_row, column=0, padx=(0, 10), pady=10, sticky="e")
 tsr_checkbox = ctk.CTkCheckBox(settings_frame, text="", variable=shitty_thirty_sec_rule, onvalue="on", offvalue="off")
 tsr_checkbox.grid(row=settings_row, column=1, padx=(0, 0), pady=0, sticky="w")
+settings_row += 1
+
+in_reverse = None
+in_reverse_var = ctk.StringVar(settings_frame, "off")
+in_reverse_label = ctk.CTkLabel(settings_frame, text="Show in reverse:")
+in_reverse_label.grid(row=settings_row, column=0, padx=(0, 10), pady=10, sticky="e")
+in_reverse_checkbox = ctk.CTkCheckBox(settings_frame, text="", variable=in_reverse_var, onvalue="on", offvalue="off")
+in_reverse_checkbox.grid(row=settings_row, column=1, padx=(0, 0), pady=0, sticky="w")
 settings_row += 1
 
 # calendar bullshit
@@ -338,10 +346,9 @@ settings_row += 1
 order_label = ctk.CTkLabel(settings_frame, text="Displaying of data:")
 order_label.grid(row=settings_row, column=0, padx=(0, 10), pady=10, sticky="e")
 order_dropdown = ctk.CTkComboBox(settings_frame, 
-                                 values=["Chronologicaly", 
-                                        "Chronologicaly descending",
-                                        "Your most streamed",
-                                        "Your least streamed",
+                                 values=["Sort chronologicaly",
+                                        "Sort by streams",
+                                        "Sort songs by minutes listened",
                                         "Average time listened (by %)",
                                         "Skips",
                                         "Minutes listened since X",
@@ -349,13 +356,13 @@ order_dropdown = ctk.CTkComboBox(settings_frame,
                                         "Top artists",
                                         "Top albums"
                                         ])
-order_dropdown.set("Your most streamed")
+order_dropdown.set("Sort by streams")
 order_dropdown.grid(row=settings_row, column=1, padx=(0, 0), pady=0, sticky="w")
 settings_row += 1
 
 
 def set_bs():
-    global limit, songs_per_row, thirty_sec_rule, start_date, end_date
+    global limit, songs_per_row, thirty_sec_rule, start_date, end_date, in_reverse
     limit = int(limit_field.get())
     songs_per_row = int(spr_field.get())
     
@@ -377,6 +384,12 @@ def set_bs():
         main_frame.grid_columnconfigure(i, weight=1)
 
     placeholder_thirty_sec_rule = shitty_thirty_sec_rule.get()
+    _in_reverse_var = in_reverse_var.get()
+
+    if _in_reverse_var == "on":
+        in_reverse = True
+    else:
+        in_reverse = False
     
     if placeholder_thirty_sec_rule == "on":
         thirty_sec_rule = True
@@ -643,17 +656,11 @@ def initialize_song_page():
     row = 1
     col = 0
 
-    if order_dropdown.get() == "Your most streamed" or order_dropdown.get() == 'Your least streamed':
+    if order_dropdown.get() == "Sort by streams":
         if thirty_sec_rule:
-            if order_dropdown.get() == 'Your most streamed':
-                songs_to_use = pf.sort_songs_by("registered_times_played", _unfucked_data, True)
-            else:
-                songs_to_use = pf.sort_songs_by("registered_times_played", _unfucked_data, False)
+            songs_to_use = pf.sort_songs_by("registered_times_played", _unfucked_data, not in_reverse)
         else:
-            if order_dropdown.get() == 'Your most streamed':
-                songs_to_use = pf.sort_songs_by("times_played", _unfucked_data, True)
-            else:
-                songs_to_use = pf.sort_songs_by("times_played", _unfucked_data, False)
+            songs_to_use = pf.sort_songs_by("times_played", _unfucked_data, not in_reverse)
 
         for i in range(len(songs_to_use)):
             if len(songs_analized) >= limit:
@@ -682,7 +689,7 @@ def initialize_song_page():
 
                 main_frame.update()
     elif order_dropdown.get() == "Average time listened (by %)":
-        _songs_to_use = pf.sort_songs_by("average_time_listened", _unfucked_data, True)
+        _songs_to_use = pf.sort_songs_by("average_time_listened", _unfucked_data, not in_reverse)
 
         # from ms to %
         for i in range(len(_songs_to_use)):
@@ -723,7 +730,7 @@ def initialize_song_page():
 
                 main_frame.update()
     elif order_dropdown.get() == "Skips":
-        songs_to_use = pf.sort_songs_by("skips", _unfucked_data, True)
+        songs_to_use = pf.sort_songs_by("skips", _unfucked_data, not in_reverse)
 
         for i in range(len(songs_to_use)):
             if len(songs_analized) >= limit:
@@ -747,12 +754,8 @@ def initialize_song_page():
                     row += 1
 
                 main_frame.update()
-    elif order_dropdown.get() == "Chronologicaly" or order_dropdown.get() == "Chronologicaly descending":
-        reverse = False
-        if order_dropdown.get() == "Chronologicaly descending":
-            reverse = True
-        
-        songs_to_use = pf.sort_by_date(_unfucked_data, reverse)
+    elif order_dropdown.get() == "Sort chronologicaly":
+        songs_to_use = pf.sort_by_date(_unfucked_data, not in_reverse)
 
         for i in range(len(songs_to_use)):
             if len(songs_analized) >= limit:
@@ -822,8 +825,6 @@ def initialize_song_page():
         search_song_btn = ctk.CTkButton(main_frame, text="Search for the song", command=lambda: handle_search(), font=("Arial", 20))
         search_song_btn.grid(row=0, column=1, sticky="e")
     elif order_dropdown.get() == "Top artists":
-        reverse = True
-
         topartists_level_toplevel = ctk.CTkToplevel(app)
         topartists_level_toplevel.resizable(False, False)
         topartists_level_toplevel.title("Top artist search settings")
@@ -858,11 +859,11 @@ def initialize_song_page():
             sorted_artists = None
             if artist_sorting_method.get() == "Sort by number of plays (Wrapped method)":
                 if thirty_sec_rule:
-                    sorted_artists = sorted(artists.items(), key=lambda x: x[1]['registered_times_played'], reverse=reverse)
+                    sorted_artists = sorted(artists.items(), key=lambda x: x[1]['registered_times_played'], reverse=not in_reverse)
                 else:
-                    sorted_artists = sorted(artists.items(), key=lambda x: x[1]['times_played'], reverse=reverse)
+                    sorted_artists = sorted(artists.items(), key=lambda x: x[1]['times_played'], reverse=not in_reverse)
             elif artist_sorting_method.get() == "Sort by total time listened":
-                sorted_artists = sorted(artists.items(), key=lambda x: x[1]['total_ms'], reverse=reverse)
+                sorted_artists = sorted(artists.items(), key=lambda x: x[1]['total_ms'], reverse=not in_reverse)
 
             index = 0
             for key, val in sorted_artists:
@@ -880,8 +881,6 @@ def initialize_song_page():
         go_btn = ctk.CTkButton(topartists_level_toplevel, command=lambda: process_top_artists(_unfucked_data, row, col), text="Go!")
         go_btn.grid(row=2, column=0, padx=10, pady=10)
     elif order_dropdown.get() == "Top albums":
-        reverse = True
-
         albums_by_name = defaultdict(lambda: {
             'registered_times_played': 0,
             'times_played': 0,
@@ -921,9 +920,9 @@ def initialize_song_page():
 
         sorted_albums = None
         if thirty_sec_rule:
-            sorted_albums = sorted(processed_albums.items(), key=lambda x: x[1]['registered_times_played'], reverse=reverse)
+            sorted_albums = sorted(processed_albums.items(), key=lambda x: x[1]['registered_times_played'], reverse=not in_reverse)
         else:
-            sorted_albums = sorted(processed_albums.items(), key=lambda x: x[1]['times_played'], reverse=reverse)
+            sorted_albums = sorted(processed_albums.items(), key=lambda x: x[1]['times_played'], reverse=not in_reverse)
 
         index = 0
         for key, val in sorted_albums:
@@ -941,7 +940,39 @@ def initialize_song_page():
                 print(f"Album {index} finished!")
                 main_frame.update()
                 index += 1
+    elif order_dropdown.get() == "Sort songs by minutes listened":
+        minutes_and_ids = {}
 
+        for song in _unfucked_data:
+            song_id = song["song_id"]
+            total_mins = int(sum(song["all_miliseconds"]) / 1000 / 60)
+            minutes_and_ids[song_id] = total_mins
+
+        songs_to_use = sorted(minutes_and_ids.items(), key=lambda x: x[1], reverse=not in_reverse)
+
+        for i in range(len(songs_to_use)):
+            if len(songs_analized) >= limit:
+                break
+
+            song_id = songs_to_use[i][0]
+
+            if song_id not in songs_analized:
+                song_data = pf.get_song_display_info(song_id, _unfucked_data)
+                mins = songs_to_use[i][-1]
+
+                if thirty_sec_rule and song_data["registered_times_played"] == 0:
+                    continue
+                    
+                songs_analized.append(song_id)
+
+                process_song(song_data, row, col, [("Total minutes: ", mins), ("Total hours: ", int(mins/60))])
+
+                col += 1
+                if col >= songs_per_row:
+                    col = 0
+                    row += 1
+
+                main_frame.update()
 
 
 
