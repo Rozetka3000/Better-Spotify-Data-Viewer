@@ -364,6 +364,10 @@ settings_row += 1
 
 def set_bs():
     global limit, songs_per_row, thirty_sec_rule, start_date, end_date, in_reverse
+    earliest_date = datetime(year=int(get_earliest_and_last_timestamps(0, "YY")), month=int(get_earliest_and_last_timestamps(0, "MM")), day=int(get_earliest_and_last_timestamps(0, "DD")))
+    latest_date = datetime(year=int(get_earliest_and_last_timestamps(1, "YY")), month=int(get_earliest_and_last_timestamps(1, "MM")), day=int(get_earliest_and_last_timestamps(1, "DD")), hour=23, minute=59, second=59)
+
+    print(earliest_date, latest_date)
     limit = int(limit_field.get())
     songs_per_row = int(spr_field.get())
     
@@ -377,6 +381,13 @@ def set_bs():
 
     start_date = datetime(year=int(start_year_val), month=int(start_month_val), day=int(start_day_val))
     end_date = datetime(year=int(end_year_val), month=int(end_month_val), day=int(end_day_val), hour=23, minute=59, second=59)
+
+    if start_date < earliest_date:
+        start_date = earliest_date
+        print("hueglot prost prost hueglot")
+    if end_date > latest_date:
+        end_date = latest_date
+        print("prost hueglot prost hueglot")
     
     for widget in main_frame.winfo_children():
         widget.destroy()
