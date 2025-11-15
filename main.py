@@ -83,26 +83,31 @@ else:
 
         # stitch the files together
         file_string = ""
-        for i in range(len(data_files)):
-            if i == 0:
-                file_content = open(data_files[i], 'r', encoding="utf-8").read()
-                file_content = file_content[:-2]
-                file_content = file_content + ","
-                file_string = file_string + file_content
-            elif i == (len(data_files)-1):
-                file_content = open(data_files[i], 'r', encoding="utf-8").read()
-                file_content = file_content[1:]
-                file_string = file_string + file_content
-            else:
-                file_content = open(data_files[i], 'r', encoding="utf-8").read()
-                file_content = file_content[1:]
-                file_content = file_content[:-2]
-                file_content = file_content + ","
+        
+        if len(data_files) == 1:
+            file_string = open(data_files[0], 'r', encoding="utf-8").read()
+        else:
+            for i in range(len(data_files)):
+                if i == 0:
+                    file_content = open(data_files[i], 'r', encoding="utf-8").read()
+                    file_content = file_content[:-2]
+                    file_content = file_content + ","
+                    file_string = file_string + file_content
+                elif i == (len(data_files)-1):
+                    file_content = open(data_files[i], 'r', encoding="utf-8").read()
+                    file_content = file_content[1:]
+                    file_string = file_string + file_content
+                else:
+                    file_content = open(data_files[i], 'r', encoding="utf-8").read()
+                    file_content = file_content[1:]
+                    file_content = file_content[:-2]
+                    file_content = file_content + ","
 
-                file_string = file_string + file_content
+                    file_string = file_string + file_content
 
         with open(stitched_data_path, 'w', encoding="utf-8") as f:
             f.write(file_string)
+        quit()
     else:
         error_window = ctk.CTkToplevel(app)
         error_window.geometry("500x500")
@@ -114,6 +119,7 @@ else:
 
         quit_btn = ctk.CTkButton(error_window, text="Quit", command=lambda: quit())
         quit_btn.pack()
+
 
 def unfuck_the_data():
     global unworked_data
