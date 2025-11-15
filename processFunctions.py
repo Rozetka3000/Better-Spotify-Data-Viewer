@@ -5,7 +5,6 @@ from PIL import Image
 from io import BytesIO
 import apikeys
 from datetime import datetime
-import ast
 import os
 
 client_id = apikeys.client_id

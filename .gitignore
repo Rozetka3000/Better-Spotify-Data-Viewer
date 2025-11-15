@@ -1,3 +1,10 @@
 apikeys.py
 __pycache__
 a whole lot of shit
+*.spec
+build
+dist
+ReadMeFirst_ExtendedStreamingHistory.pdf
+Streaming_History_Audio_2022-2025_0.json
+Streaming_History_Audio_2025_1.json
+Streaming_History_Video_2024.json

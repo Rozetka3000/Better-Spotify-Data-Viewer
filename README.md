@@ -1,19 +1,45 @@
 # Better-Spotify-Data-Viewer
+CURRENT VERSION: 1.0.0
 
-[IN DEVELOPMENT, THE APP DOESN'T FULLY WORK, SOME STUFF MIGHT BE BROKEN]
 
-There are many apps that "let you see your Spotify stats", but make you pay for certain important features and I personally find it scummy to charge people for their own data.
+QUICK DESCRIPTION:
+There are many apps that "let you see your Spotify stats", but make you pay for certain important features and I personally find it scummy to charge people for their own data; This app is the direct reaction to those bullshit apps. This simple app simply allows people to see their own data from Spotify (and I do mean fully see it).
 
-Therefore, I'm making this simple app that simply allows people to see their own data from Spotify (and I do mean fully see it). I will not introduce basic features that others app already, with maybe some exceptions, since I don't see a point in that.
+
 
 HOW TO USE THE APP:
-1.Before you even enter the app, you gotta go to Spotify, and then Account > Account Privacy and request your extended streaming history (Don't forget to confirm it in your e-mail).
 
-2.When you first enter the app you will be told to choose your files that contain your data. Simply select all the files given to you by Spotify. Your data then gets processed and it might take a bit, depending on how much of a Spotiphile you are.
+0.Request your "extended listening history" from Spotify; There are 101 videos on how do that, so just look it up.
 
-3.You have 2 windows opened. A blank one and a small one with settings. In the small one you choose how you'd like to see your listening data be presented. Then just click configure.
+1.When you enter the app, you are greeted with a pop-up, that makes you choose all of the files that Spotify gave you. Just simply choose them. The app then stops on purpose (Don't ask why).
 
-4.Idk, enjoy ig. This really ain't a complicated app to use.
+2.Re-enter the app and wait for a bit. The app will process your data for a bit (shouldn't take more than a few seconds).
 
-For now you gotta build the app yourself (there's no build available at the moment, and there won't be until i finish the damn app).
-To make your own build, you gotta create a file called 'apikeys.py' and define in it your client_id and client_secret that you get from the Spotify dev bullshit thingy.
+
+3.You're greeted with a few windows: an empty window; a window that let's you delete your data if you so want to and a configuration window.
+
+In the configuration window there are many fields:
+
+"Limit" is how many items will be displayed (you can't just display the whole thing since it'll take too long and the program might just shit itself);
+
+"Items per row" is how many items are per row (no shit);
+
+"30 second streaming rule" regulates the way streams are counted. Spotify only counts streams above 30 seconds, therefore this checkbox is ticked at the beginning, though you can choose to turn it off if you simply don't give a fuck;
+
+"Show in reverse" simply dictates how you want your data shown: forwards or backwards, depending on the category;
+
+"Start date" and "End date" is a metric in which you choose data from which period counts. Pls don't put bullshit like zero for year, month or day since it causes Python to shit itself;
+
+And lastly, "Displaying of data" is the most important one: Here you choose how you want your data to be displayed. All the options should be self-explanatory.
+
+After you chose your great configurations, just click "Config"; You can also click on many things in this app, like for example you can click on a song or artist to get more info about your stats on them.
+
+
+
+This should be all that you need to know.
+
+KNOWN ISSUES:
+
+The back button is a piece of shit
+
+The UI is ass, but it's cuz it's made in python (someone pls help)

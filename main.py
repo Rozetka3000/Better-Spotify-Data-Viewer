@@ -9,6 +9,7 @@ import os
 from datetime import datetime
 import time
 from collections import defaultdict
+import sys
 
 client_id = pf.client_id
 client_secret = pf.client_secret
@@ -107,7 +108,7 @@ else:
 
         with open(stitched_data_path, 'w', encoding="utf-8") as f:
             f.write(file_string)
-        quit()
+        sys.exit()
     else:
         error_window = ctk.CTkToplevel(app)
         error_window.geometry("500x500")
@@ -117,7 +118,7 @@ else:
         error_label = ctk.CTkLabel(error_window, text="YOU DIDN'T SELECT ANY FILES, GO FUCK YOURSELF! \n Restart the app and try again!")
         error_label.pack()
 
-        quit_btn = ctk.CTkButton(error_window, text="Quit", command=lambda: quit())
+        quit_btn = ctk.CTkButton(error_window, text="Quit", command=lambda: sys.exit())
         quit_btn.pack()
 
 
@@ -231,13 +232,13 @@ def delete_data(option):
     if option == 0:
         os.remove(unfucked_data_path)
 
-        quit()
+        sys.exit()
     elif option == 1:
         if os.path.exists(unfucked_data_path):
             os.remove(unfucked_data_path)
 
         os.remove(stitched_data_path)
-        quit()
+        sys.exit()
 
 delete_unfucked_data_btn = ctk.CTkButton(data_management_toplevel, text="Delete your processed data", command=lambda: delete_data(0))
 delete_unfucked_data_btn.grid(row=1, column=0, pady=10, padx=20)
