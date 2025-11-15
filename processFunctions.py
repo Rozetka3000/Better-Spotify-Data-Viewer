@@ -49,15 +49,16 @@ def spotify_time_to_normal_time(spotify_time):
     time = time.strftime("%Y-%m-%d %H:%M:%S")
     return time
 
-def search_for_artist(token, artist_name):
-    url = "https://api.spotify.com/v1/search?"
-    headers = get_auth_header(token)
-    query = f"q={artist_name}&type=artist&limit=1"
+def search_for_artist(artist_name, data):
+    artists = []
+    for song in data:
+        artist = song["artist_name"]
+        if type(artist) == str:
+            if artist_name.lower() in artist.lower():
+                if artist not in artists:
+                    artists.append(artist)
 
-    query_url = url + query
-    result = requests.get(query_url, headers=headers)
-    json_result = json.loads(result.content)
-    #print(json_result)
+    return artists
 
 def get_artist(artist_id):
     url = "https://api.spotify.com/v1/artists/"
@@ -171,15 +172,19 @@ def handle_cover_bullshit(song_id, ctk, size=(640, 640)):
         return ctk_image
     else:
         image_url = get_song_cover(song_id)
-        response = requests.get(image_url)
-        response.raise_for_status()
-        image = Image.open(BytesIO(response.content))
-        ctk_image = ctk.CTkImage(light_image=image, dark_image=image, size=size)
+        
+        if image_url == None:
+            return None
+        else:
+            response = requests.get(image_url)
+            response.raise_for_status()
+            image = Image.open(BytesIO(response.content))
+            ctk_image = ctk.CTkImage(light_image=image, dark_image=image, size=size)
 
-        with open(cached_image_path, 'wb') as f:
-            image.save(f, "JPEG")
-            
-        return ctk_image
+            with open(cached_image_path, 'wb') as f:
+                image.save(f, "JPEG")
+                
+            return ctk_image
 
 def handle_artist_image_bullshit(artist_name, ctk, size=(640, 640)):
     cached_image_path = os.path.join(cached_images_folder, f"{artist_name}.jpg")
