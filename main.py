@@ -270,7 +270,7 @@ limit_field.insert(0, "6")
 settings_row += 1
 
 songs_per_row = None
-spr_label = ctk.CTkLabel(settings_frame, text="Songs per row:")
+spr_label = ctk.CTkLabel(settings_frame, text="Items per row:")
 spr_label.grid(row=settings_row, column=0, padx=(0, 10), pady=10, sticky="e")
 spr_field = ctk.CTkEntry(settings_frame)
 spr_field.grid(row=settings_row, column=1, padx=(0, 0), pady=0, sticky="w")
